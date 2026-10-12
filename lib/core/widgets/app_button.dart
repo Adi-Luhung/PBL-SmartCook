@@ -6,7 +6,7 @@ import '../theme/app_text_styles.dart';
 enum AppButtonVariant { primary, outline, text }
 
 /// Tombol standar SmartCook. Dipakai untuk "Masuk", "Daftar Sekarang",
-/// "Cari & Masukkan Bahan", "Jelajahi Semua Resep Masakan", dst.
+/// "Cari & Masukkan Bahan", "Jelajahi Semua Resep Masakan", "Simpan Profil", "Reset", dst.
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
@@ -16,6 +16,13 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.fullWidth = true,
     this.loading = false,
+    this.backgroundColor,
+    this.textColor,
+    this.borderSide,
+    this.borderRadius,
+    this.iconLeading = false,
+    this.boxShadow,
+    this.height,
   });
 
   final String label;
@@ -24,11 +31,18 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final bool fullWidth;
   final bool loading;
+  final Color? backgroundColor;
+  final Color? textColor;
+  final BorderSide? borderSide;
+  final double? borderRadius;
+  final bool iconLeading;
+  final List<BoxShadow>? boxShadow;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
-    final labelColor =
-        variant == AppButtonVariant.primary ? Colors.white : AppColors.primary;
+    final labelColor = textColor ??
+        (variant == AppButtonVariant.primary ? Colors.white : AppColors.primary);
 
     final child = loading
         ? const SizedBox(
@@ -40,22 +54,30 @@ class AppButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (icon != null && iconLeading) ...[
+                Icon(icon, size: 20, color: labelColor),
+                const SizedBox(width: 8),
+              ],
               Text(label, style: AppTextStyles.button.copyWith(color: labelColor)),
-              if (icon != null) ...[
+              if (icon != null && !iconLeading) ...[
                 const SizedBox(width: 8),
                 Icon(icon, size: 18, color: labelColor),
               ],
             ],
           );
 
-    final button = switch (variant) {
+    final radius = BorderRadius.circular(borderRadius ?? 12);
+
+    final Widget buttonWidget = switch (variant) {
       AppButtonVariant.primary => ElevatedButton(
           onPressed: loading ? null : onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            backgroundColor: backgroundColor ?? AppColors.primary,
+            disabledBackgroundColor:
+                (backgroundColor ?? AppColors.primary).withValues(alpha: 0.6),
+            padding: EdgeInsets.symmetric(vertical: height != null ? 0 : 14),
+            minimumSize: height != null ? Size(0, height!) : null,
+            shape: RoundedRectangleBorder(borderRadius: radius),
             elevation: 0,
           ),
           child: child,
@@ -63,9 +85,11 @@ class AppButton extends StatelessWidget {
       AppButtonVariant.outline => OutlinedButton(
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.primary),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            backgroundColor: backgroundColor,
+            side: borderSide ?? const BorderSide(color: AppColors.primary),
+            padding: EdgeInsets.symmetric(vertical: height != null ? 0 : 14),
+            minimumSize: height != null ? Size(0, height!) : null,
+            shape: RoundedRectangleBorder(borderRadius: radius),
           ),
           child: child,
         ),
@@ -75,6 +99,18 @@ class AppButton extends StatelessWidget {
         ),
     };
 
-    return fullWidth ? SizedBox(width: double.infinity, child: button) : button;
+    Widget result = buttonWidget;
+
+    if (boxShadow != null) {
+      result = DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          boxShadow: boxShadow,
+        ),
+        child: result,
+      );
+    }
+
+    return fullWidth ? SizedBox(width: double.infinity, child: result) : result;
   }
 }
