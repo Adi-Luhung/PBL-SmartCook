@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/app_button.dart';
+import 'edit_profile_page.dart';
 
 /// Tab Profil — tampilan statis, data masih dummy (belum query Supabase).
 class ProfilePage extends StatelessWidget {
@@ -244,7 +245,13 @@ class _HealthCard extends StatelessWidget {
                 ),
               ),
               OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const EditProfilePage(),
+                    ),
+                  );
+                },
                 icon: const Icon(Icons.edit_outlined, size: 14),
                 label: const Text('Ubah'),
                 style: OutlinedButton.styleFrom(

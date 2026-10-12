@@ -16,13 +16,23 @@ class EditProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.profileBackground,
+      appBar: AppBar(
+        backgroundColor: AppColors.profileBackground,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textDark),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SafeArea(
+        top: false,
         bottom: false,
         child: ListView(
           padding: const EdgeInsets.only(
             left: 20,
             right: 20,
-            top: 14,
+            top: 0,
             bottom: 36,
           ),
           children: [
