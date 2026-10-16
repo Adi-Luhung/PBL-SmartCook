@@ -10,9 +10,9 @@ class _NavItem {
 }
 
 const _items = [
-  _NavItem(Icons.home_rounded, 'Beranda'),
-  _NavItem(Icons.explore_outlined, 'Rekomendasi'),
-  _NavItem(Icons.edit_note_rounded, 'Input'),
+  _NavItem(Icons.home_outlined, 'Beranda'),
+  _NavItem(Icons.explore_outlined, 'Eksplorasi'),
+  _NavItem(Icons.inbox_outlined, 'Input'),
   _NavItem(Icons.person_outline_rounded, 'Profil'),
 ];
 
