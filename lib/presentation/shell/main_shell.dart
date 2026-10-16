@@ -25,7 +25,7 @@ class _MainShellState extends State<MainShell> {
     final pages = [
       BerandaPage(onNavigate: _goTo),
       const RecommendationPage(),
-      const InputBahanPage(),
+      InputBahanPage(onSearchRecipes: () => _goTo(1)),
       const ProfilePage(),
     ];
 
