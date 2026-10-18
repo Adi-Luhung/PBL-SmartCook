@@ -1,60 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/app_button.dart';
+import '../../data/models.dart';
+import '../../providers/app_providers.dart';
+import '../common/actions.dart';
+import '../recipe/recipe_detail_page.dart';
 import 'edit_profile_page.dart';
 
-/// Tab Profil — tampilan statis, data masih dummy (belum query Supabase).
-class ProfilePage extends StatelessWidget {
+/// Tab Profil — data dari tabel `profiles`, `bookmarks`, dan `cook_docs`.
+class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
+  Future<void> _logout(WidgetRef ref) async {
+    ref.read(searchQueryProvider.notifier).clear();
+    await ref.read(supabaseProvider).auth.signOut();
+    // AuthGate otomatis kembali ke halaman login.
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileProvider).value;
+    final email = ref.watch(supabaseProvider).auth.currentUser?.email;
+    final savedCount = ref.watch(savedRecipesProvider).value?.length ?? 0;
+    final cookCount = ref.watch(cookDocsProvider).value?.length ?? 0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           children: [
-
-            // ── Avatar + Info Pengguna ──
-            _ProfileHeader(),
+            _ProfileHeader(profile: profile, email: email),
             const SizedBox(height: 20),
-
-            // ── Stat Pills ──
-            const Row(
+            Row(
               children: [
                 Expanded(
-                    child: _StatPill(label: 'Masakan Dibuat', value: '14')),
-                SizedBox(width: 12),
+                    child: _StatPill(label: 'Masakan Dibuat', value: '$cookCount')),
+                const SizedBox(width: 12),
                 Expanded(
-                    child: _StatPill(label: 'Resep Disimpan', value: '8')),
+                    child: _StatPill(label: 'Resep Disimpan', value: '$savedCount')),
               ],
             ),
             const SizedBox(height: 20),
-
-            // ── Kesehatan & Kalori ──
-            _HealthCard(),
+            _HealthCard(profile: profile),
             const SizedBox(height: 20),
-
-            // ── Resep Disimpan ──
-            _SavedRecipesSection(),
+            const _SavedRecipesSection(),
             const SizedBox(height: 20),
-
-            // ── Dokumentasi Masak ──
-            _CookDocSection(),
+            const _CookDocSection(),
             const SizedBox(height: 28),
-
-            // ── Aksi Akun ──
             AppButton(
               label: 'Ganti Akun',
               variant: AppButtonVariant.outline,
               icon: Icons.swap_horiz_rounded,
-              onPressed: () {},
+              onPressed: () => _logout(ref),
             ),
             const SizedBox(height: 12),
-            _LogoutButton(),
+            _LogoutButton(onPressed: () => _logout(ref)),
             const SizedBox(height: 16),
           ],
         ),
@@ -101,13 +105,19 @@ class _SuccessBanner extends StatelessWidget {
 // Header Profil
 // ─────────────────────────────────────────────────
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
+  const _ProfileHeader({required this.profile, required this.email});
+
+  final UserProfile? profile;
+  final String? email;
 
   @override
   Widget build(BuildContext context) {
+    final name = (profile?.fullName?.trim().isNotEmpty ?? false)
+        ? profile!.fullName!
+        : (email?.split('@').first ?? 'Pengguna');
+
     return Column(
       children: [
-        // Avatar dengan badge centang
         Stack(
           alignment: Alignment.bottomRight,
           children: [
@@ -132,24 +142,20 @@ class _ProfileHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-
-        // Nama
-        const Text('Heisenberg', style: AppTextStyles.h2),
+        Text(name, style: AppTextStyles.h2),
         const SizedBox(height: 4),
-
-        // Email
-        const Text('heisenberg123@gmail.com', style: AppTextStyles.bodyMuted),
+        Text(email ?? '', style: AppTextStyles.bodyMuted),
         const SizedBox(height: 10),
-
-        // Gender & Usia
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _InfoPill(label: 'Perempuan'),
-            const SizedBox(width: 10),
-            _InfoPill(label: '24 Tahun'),
-          ],
-        ),
+        if (profile?.gender != null || profile?.age != null)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (profile?.gender != null) _InfoPill(label: profile!.gender!),
+              if (profile?.gender != null && profile?.age != null)
+                const SizedBox(width: 10),
+              if (profile?.age != null) _InfoPill(label: '${profile!.age} Tahun'),
+            ],
+          ),
       ],
     );
   }
@@ -208,7 +214,9 @@ class _StatPill extends StatelessWidget {
 // Kesehatan & Kalori Card
 // ─────────────────────────────────────────────────
 class _HealthCard extends StatelessWidget {
-  const _HealthCard();
+  const _HealthCard({required this.profile});
+
+  final UserProfile? profile;
 
   @override
   Widget build(BuildContext context) {
@@ -238,9 +246,9 @@ class _HealthCard extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Kesehatan & Kalori', style: AppTextStyles.label),
-                    Text('58 kg • 165 cm', style: AppTextStyles.bodyMuted),
+                  children: [
+                    const Text('Kesehatan & Kalori', style: AppTextStyles.label),
+                    Text(_bodyLine(profile), style: AppTextStyles.bodyMuted),
                   ],
                 ),
               ),
@@ -290,26 +298,31 @@ class _HealthCard extends StatelessWidget {
                         textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
-                            '21.3',
+                            profile?.bmi == null ? '-' : profile!.bmi!.toStringAsFixed(1),
                             style: AppTextStyles.h1.copyWith(fontSize: 28),
                           ),
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'Ideal',
-                              style: TextStyle(
-                                color: AppColors.success,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
+                          if (profile?.bmiLabel != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: profile!.bmiLabel == 'Ideal'
+                                    ? const Color(0xFFDCFCE7)
+                                    : const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                profile!.bmiLabel!,
+                                style: TextStyle(
+                                  color: profile!.bmiLabel == 'Ideal'
+                                      ? AppColors.success
+                                      : const Color(0xFFD97706),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -355,7 +368,9 @@ class _HealthCard extends StatelessWidget {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: '1.829',
+                              text: profile?.targetKkal == null
+                                  ? '-'
+                                  : _formatKkal(profile!.targetKkal!),
                               style: AppTextStyles.h1.copyWith(fontSize: 28),
                             ),
                             const TextSpan(
@@ -378,28 +393,32 @@ class _HealthCard extends StatelessWidget {
       ),
     );
   }
+
+  /// 1829 -> "1.829"
+  static String _formatKkal(int n) => n.toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+
+  static String _bodyLine(UserProfile? p) {
+    if (p == null || p.weightKg == null || p.heightCm == null) {
+      return 'Data tubuh belum diisi';
+    }
+    return '${p.weightKg!.toStringAsFixed(0)} kg • ${p.heightCm!.toStringAsFixed(0)} cm';
+  }
 }
 
 // ─────────────────────────────────────────────────
 // Resep Disimpan
 // ─────────────────────────────────────────────────
-class _SavedRecipesSection extends StatelessWidget {
+class _SavedRecipesSection extends ConsumerWidget {
   const _SavedRecipesSection();
 
-  static const _recipes = [
-    {'name': 'Sup Telur Tomat', 'time': '12 Menit', 'ingredients': '3 Bahan'},
-    {
-      'name': 'Orak Arik Tahu Gurih',
-      'time': '10 Menit',
-      'ingredients': '4 Bahan'
-    },
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref.watch(savedRecipesProvider);
+    final list = saved.value ?? const <RecipeSummary>[];
+
     return Column(
       children: [
-        // Header
         Row(
           children: [
             const Icon(Icons.bookmark_outline,
@@ -409,15 +428,14 @@ class _SavedRecipesSection extends StatelessWidget {
               child: Text('Resep Disimpan', style: AppTextStyles.label),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                '8 Resep',
-                style: TextStyle(
+              child: Text(
+                '${list.length} Resep',
+                style: const TextStyle(
                   color: Color(0xFFD97706),
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
@@ -427,26 +445,43 @@ class _SavedRecipesSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-
-        // List resep
         Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
-          child: Column(
-            children: _recipes
-                .asMap()
-                .entries
-                .map((e) => _SavedRecipeItem(
-                      name: e.value['name']!,
-                      time: e.value['time']!,
-                      ingredients: e.value['ingredients']!,
-                      showDivider: e.key < _recipes.length - 1,
-                    ))
-                .toList(),
-          ),
+          child: saved.isLoading && list.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : list.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        'Belum ada resep yang disimpan. Ketuk ikon bookmark pada resep.',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.bodyMuted,
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        for (var i = 0; i < list.length; i++)
+                          _SavedRecipeItem(
+                            name: list[i].title,
+                            detail:
+                                '${list[i].totalSteps} langkah • ${list[i].totalIngredients} bahan',
+                            showDivider: i < list.length - 1,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    RecipeDetailPage(recipeId: list[i].id),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
         ),
       ],
     );
@@ -456,56 +491,53 @@ class _SavedRecipesSection extends StatelessWidget {
 class _SavedRecipeItem extends StatelessWidget {
   const _SavedRecipeItem({
     required this.name,
-    required this.time,
-    required this.ingredients,
+    required this.detail,
     required this.showDivider,
+    required this.onTap,
   });
 
   final String name;
-  final String time;
-  final String ingredients;
+  final String detail;
   final bool showDivider;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              // Foto placeholder
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  color: AppColors.border,
-                  child: const Icon(Icons.fastfood_outlined,
-                      color: AppColors.textMuted),
+        InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    color: AppColors.border,
+                    child: const Icon(Icons.fastfood_outlined,
+                        color: AppColors.textMuted),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: AppTextStyles.label),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.access_time,
-                            size: 13, color: AppColors.textMuted),
-                        const SizedBox(width: 4),
-                        Text('$time • $ingredients',
-                            style: AppTextStyles.caption),
-                      ],
-                    ),
-                  ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(name,
+                          style: AppTextStyles.label,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 4),
+                      Text(detail, style: AppTextStyles.caption),
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.textMuted),
-            ],
+                const Icon(Icons.chevron_right, color: AppColors.textMuted),
+              ],
+            ),
           ),
         ),
         if (showDivider)
@@ -516,23 +548,26 @@ class _SavedRecipeItem extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────
-// Dokumentasi Masak
+// Dokumentasi Masak (foto dari galeri)
 // ─────────────────────────────────────────────────
-class _CookDocSection extends StatelessWidget {
+class _CookDocSection extends ConsumerWidget {
   const _CookDocSection();
 
-  static const _photos = [
-    {'name': 'Nasi Telur Kecap', 'time': 'Kemarin siang'},
-    {'name': 'Tumis Kangkung', 'time': '2 hari lalu'},
-    {'name': 'Tempe Goreng', 'time': '24 Okt'},
-    {'name': 'Tahu Telur', 'time': '20 Okt'},
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
   ];
 
+  static String _timeLabel(DateTime t) =>
+      '${t.day} ${_months[t.month - 1]} ${t.year}';
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final docs = ref.watch(cookDocsProvider);
+    final list = docs.value ?? const <CookDoc>[];
+
     return Column(
       children: [
-        // Header
         Row(
           children: [
             const Icon(Icons.camera_alt_outlined,
@@ -542,9 +577,9 @@ class _CookDocSection extends StatelessWidget {
               child: Text('Dokumentasi Masak', style: AppTextStyles.label),
             ),
             GestureDetector(
-              onTap: () {},
+              onTap: () => pickAndUploadCookDoc(context, ref),
               child: const Text(
-                'Galeri Pribadi',
+                'Tambah Foto',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
@@ -555,29 +590,53 @@ class _CookDocSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-
-        // Grid 2x2
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.2,
-          children: _photos
-              .map((p) =>
-                  _PhotoCard(name: p['name']!, time: p['time']!))
-              .toList(),
-        ),
+        if (docs.isLoading && list.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (list.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Text(
+              'Belum ada foto. Ketuk "Tambah Foto" untuk memilih dari galeri.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMuted,
+            ),
+          )
+        else
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.2,
+            children: [
+              for (final d in list)
+                _PhotoCard(
+                  name: d.recipeTitle ?? 'Masakanku',
+                  time: _timeLabel(d.createdAt),
+                  imageUrl: d.imageUrl,
+                ),
+            ],
+          ),
       ],
     );
   }
 }
 
 class _PhotoCard extends StatelessWidget {
-  const _PhotoCard({required this.name, required this.time});
+  const _PhotoCard({required this.name, required this.time, this.imageUrl});
   final String name;
   final String time;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -586,10 +645,15 @@ class _PhotoCard extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Foto placeholder abu-abu
-          Container(color: const Color(0xFFB0B8C1)),
-
-          // Gradient gelap di bawah
+          if (imageUrl == null)
+            Container(color: const Color(0xFFB0B8C1))
+          else
+            Image.network(
+              imageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  Container(color: const Color(0xFFB0B8C1)),
+            ),
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -600,8 +664,6 @@ class _PhotoCard extends StatelessWidget {
               ),
             ),
           ),
-
-          // Label nama & waktu
           Positioned(
             left: 10,
             right: 10,
@@ -611,6 +673,8 @@ class _PhotoCard extends StatelessWidget {
               children: [
                 Text(
                   name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -619,10 +683,7 @@ class _PhotoCard extends StatelessWidget {
                 ),
                 Text(
                   time,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                 ),
               ],
             ),
@@ -637,14 +698,16 @@ class _PhotoCard extends StatelessWidget {
 // Tombol Keluar (merah outline)
 // ─────────────────────────────────────────────────
 class _LogoutButton extends StatelessWidget {
-  const _LogoutButton();
+  const _LogoutButton({required this.onPressed});
+
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () {},
+        onPressed: onPressed,
         icon: const Icon(Icons.logout, color: AppColors.danger, size: 18),
         label: const Text('Keluar Akun'),
         style: OutlinedButton.styleFrom(
