@@ -1,12 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/utils/text_utils.dart';
 import '../../core/widgets/app_button.dart';
+import '../../data/models.dart';
+import '../../providers/app_providers.dart';
+import '../common/actions.dart';
+import '../recipe/recipe_detail_page.dart';
 import 'widgets/home_recipe_list_item.dart';
 
-/// Tab Beranda — tampilan statis, data masih dummy (belum query Supabase).
-class BerandaPage extends StatefulWidget {
+class _HomeItem {
+  const _HomeItem({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.steps,
+    required this.ingredientsLabel,
+  });
+
+  final int id;
+  final String title;
+  final String subtitle;
+  final int steps;
+  final String ingredientsLabel;
+}
+
+/// Tab Beranda — kalau pengguna sudah memilih bahan, tampilkan resep paling
+/// cocok; kalau belum, tampilkan beberapa resep dari katalog.
+class BerandaPage extends ConsumerWidget {
   const BerandaPage({super.key, required this.onNavigate});
 
   /// Dipanggil saat user mau pindah tab: 0=Beranda, 1=Rekomendasi,
@@ -14,29 +37,37 @@ class BerandaPage extends StatefulWidget {
   final ValueChanged<int> onNavigate;
 
   @override
-  State<BerandaPage> createState() => _BerandaPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final List<RecipeMatch> matches =
+        ref.watch(recommendationsProvider).value ?? const <RecipeMatch>[];
+    final featured = ref.watch(featuredRecipesProvider);
+    final bookmarks = ref.watch(bookmarkProvider).value ?? <int>{};
 
-class _BerandaPageState extends State<BerandaPage> {
-  final Set<String> _bookmarked = {};
+    final List<_HomeItem> items;
+    if (matches.isNotEmpty) {
+      items = matches
+          .take(5)
+          .map((r) => _HomeItem(
+                id: r.id,
+                title: r.title,
+                subtitle:
+                    'Cocok untuk ${r.matchedNames.take(3).map(titleCase).join(', ')}',
+                steps: r.totalSteps,
+                ingredientsLabel: '${r.matched}/${r.total} bahan',
+              ))
+          .toList();
+    } else {
+      items = (featured.value ?? const <RecipeSummary>[])
+          .map((r) => _HomeItem(
+                id: r.id,
+                title: r.title,
+                subtitle: r.category == null ? '' : 'Kategori ${titleCase(r.category!)}',
+                steps: r.totalSteps,
+                ingredientsLabel: '${r.totalIngredients} bahan',
+              ))
+          .toList();
+    }
 
-  static const _recommended = [
-    (
-      title: 'Sup Ayam Jahe Hangat',
-      subtitle: 'Cocok untuk dada ayam & daun bawang',
-      duration: 25,
-      calories: 320,
-    ),
-    (
-      title: 'Tumis Tahu Telur Saus Tiram',
-      subtitle: 'Gunakan stok tahu dan telur ayam',
-      duration: 15,
-      calories: 240,
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -48,20 +79,20 @@ class _BerandaPageState extends State<BerandaPage> {
             style: AppTextStyles.bodyMuted,
           ),
           const SizedBox(height: 20),
-          _SearchCard(onSearchTap: () => widget.onNavigate(1)),
+          _SearchCard(onSearchTap: () => onNavigate(1)),
           const SizedBox(height: 12),
-          _HighlightCard(onTap: () => widget.onNavigate(2)),
+          _HighlightCard(onTap: () => onNavigate(2)),
           const SizedBox(height: 24),
           Row(
             children: [
               Text('Rekomendasi Masakan', style: AppTextStyles.h2),
               const Spacer(),
               GestureDetector(
-                onTap: () => widget.onNavigate(1),
+                onTap: () => onNavigate(1),
                 child: Row(
                   children: [
                     Text(
-                      'Lihat Semua (24)',
+                      'Lihat Semua',
                       style: AppTextStyles.label.copyWith(color: AppColors.primary),
                     ),
                     const Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
@@ -71,31 +102,43 @@ class _BerandaPageState extends State<BerandaPage> {
             ],
           ),
           const SizedBox(height: 12),
-          ...List.generate(_recommended.length, (i) {
-            final item = _recommended[i];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: HomeRecipeListItem(
-                title: item.title,
-                subtitle: item.subtitle,
-                durationMinutes: item.duration,
-                calories: item.calories,
-                bookmarked: _bookmarked.contains(item.title),
-                onBookmarkTap: () => setState(() {
-                  if (_bookmarked.contains(item.title)) {
-                    _bookmarked.remove(item.title);
-                  } else {
-                    _bookmarked.add(item.title);
-                  }
-                }),
-                onTap: () {},
+          if (items.isEmpty && featured.isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'Belum ada resep yang bisa ditampilkan. Periksa koneksi internetmu.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMuted,
               ),
-            );
-          }),
+            )
+          else
+            ...items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: HomeRecipeListItem(
+                  title: item.title,
+                  subtitle: item.subtitle,
+                  stepsCount: item.steps,
+                  ingredientsLabel: item.ingredientsLabel,
+                  bookmarked: bookmarks.contains(item.id),
+                  onBookmarkTap: () => toggleBookmark(context, ref, item.id),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => RecipeDetailPage(recipeId: item.id),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: 8),
           AppButton(
             label: 'Jelajahi Semua Resep Masakan',
-            onPressed: () => widget.onNavigate(1),
+            onPressed: () => onNavigate(1),
           ),
         ],
       ),

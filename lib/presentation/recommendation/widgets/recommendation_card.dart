@@ -11,10 +11,10 @@ class RecommendationCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.matchedWith,
-    required this.durationMinutes,
+    required this.overlayLabel,
     required this.matchPercent,
     required this.stepsCount,
-    this.isDiet = false,
+    this.isDiet,
     this.bookmarked = false,
     this.onBookmarkTap,
     this.onCookTap,
@@ -22,10 +22,12 @@ class RecommendationCard extends StatelessWidget {
 
   final String title;
   final String matchedWith;
-  final int durationMinutes;
+  /// Teks kecil di pojok foto, mis. "3/5 bahan".
+  final String overlayLabel;
   final int matchPercent;
   final int stepsCount;
-  final bool isDiet;
+  /// Null = tidak diketahui, badge disembunyikan.
+  final bool? isDiet;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
   final VoidCallback? onCookTap;
@@ -64,7 +66,7 @@ class RecommendationCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '$durationMinutes mnt',
+                    overlayLabel,
                     style: AppTextStyles.caption.copyWith(color: Colors.white),
                   ),
                 ),
@@ -83,8 +85,10 @@ class RecommendationCard extends StatelessWidget {
                       backgroundColor: AppColors.primaryLight,
                       textColor: AppColors.primaryDark,
                     ),
-                    const SizedBox(width: 6),
-                    DietBadge(isDiet: isDiet),
+                    if (isDiet != null) ...[
+                      const SizedBox(width: 6),
+                      DietBadge(isDiet: isDiet!),
+                    ],
                     const Spacer(),
                     GestureDetector(
                       onTap: onBookmarkTap,
@@ -97,9 +101,9 @@ class RecommendationCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(title, style: AppTextStyles.h2),
+                Text(title, style: AppTextStyles.h2, maxLines: 2, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
-                Text('Cocok: $matchedWith', style: AppTextStyles.bodyMuted),
+                Text('Cocok: $matchedWith', style: AppTextStyles.bodyMuted, maxLines: 2, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 12),
                 Row(
                   children: [

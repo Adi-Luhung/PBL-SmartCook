@@ -1,96 +1,147 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/utils/text_utils.dart';
+import '../../core/widgets/app_button.dart';
+import '../../providers/app_providers.dart';
+import '../common/actions.dart';
+import '../recipe/recipe_detail_page.dart';
 import 'widgets/recommendation_card.dart';
 
-/// Tab Rekomendasi — data masih dummy (belum query Content-Based
-/// Filtering dari Supabase).
-class RecommendationPage extends StatefulWidget {
-  const RecommendationPage({super.key});
+/// Tab Rekomendasi — resep yang paling cocok dengan bahan yang dipilih
+/// (fungsi SQL `match_recipes`, berbobot IDF).
+class RecommendationPage extends ConsumerWidget {
+  const RecommendationPage({super.key, this.onPickIngredients});
+
+  /// Pindah ke tab Input Bahan.
+  final VoidCallback? onPickIngredients;
 
   @override
-  State<RecommendationPage> createState() => _RecommendationPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final query = ref.watch(searchQueryProvider);
+    final recipes = ref.watch(recommendationsProvider);
+    final bookmarks = ref.watch(bookmarkProvider).value ?? <int>{};
 
-class _RecommendationPageState extends State<RecommendationPage> {
-  final Set<String> _bookmarked = {};
-
-  static const _ingredients = ['Tahu', 'Telur', 'Bawang', 'Cabai'];
-
-  static const _recipes = [
-    (
-      title: 'Tahu Telur Bumbu Kecap Pedas',
-      matchedWith: 'Tahu, Telur, Bawang, Cabai',
-      duration: 15,
-      match: 95,
-      steps: 3,
-      isDiet: false,
-    ),
-    (
-      title: 'Orak-Arik Telur Tahu Sehat',
-      matchedWith: 'Tahu, Telur, Bawang',
-      duration: 10,
-      match: 85,
-      steps: 2,
-      isDiet: true,
-    ),
-    (
-      title: 'Sambal Goreng Tahu Telur',
-      matchedWith: 'Tahu, Telur, Cabai',
-      duration: 20,
-      match: 75,
-      steps: 4,
-      isDiet: false,
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text('Rekomendasi untukmu', style: AppTextStyles.h1),
           const SizedBox(height: 4),
-          Text('Berdasarkan ${_ingredients.length} bahan dapurmu', style: AppTextStyles.bodyMuted),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: _ingredients
-                .map((name) => Chip(
-                      label: Text(name, style: AppTextStyles.caption),
-                      avatar: const Icon(Icons.check, size: 14, color: AppColors.primary),
-                      backgroundColor: AppColors.inputFill,
-                      side: BorderSide.none,
-                    ))
-                .toList(),
+          Text(
+            query.names.isEmpty
+                ? 'Pilih bahan dapurmu untuk melihat rekomendasi.'
+                : 'Berdasarkan ${query.names.length} bahan dapurmu',
+            style: AppTextStyles.bodyMuted,
           ),
+          const SizedBox(height: 12),
+          if (query.names.isNotEmpty)
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: query.names
+                  .map((name) => Chip(
+                        label: Text(name, style: AppTextStyles.caption),
+                        avatar: const Icon(Icons.check,
+                            size: 14, color: AppColors.primary),
+                        backgroundColor: AppColors.inputFill,
+                        side: BorderSide.none,
+                      ))
+                  .toList(),
+            ),
           const SizedBox(height: 20),
-          ...List.generate(_recipes.length, (i) {
-            final r = _recipes[i];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: RecommendationCard(
-                title: r.title,
-                matchedWith: r.matchedWith,
-                durationMinutes: r.duration,
-                matchPercent: r.match,
-                stepsCount: r.steps,
-                isDiet: r.isDiet,
-                bookmarked: _bookmarked.contains(r.title),
-                onBookmarkTap: () => setState(() {
-                  if (_bookmarked.contains(r.title)) {
-                    _bookmarked.remove(r.title);
-                  } else {
-                    _bookmarked.add(r.title);
-                  }
-                }),
-                onCookTap: () {},
+          if (query.ids.isEmpty)
+            _EmptyState(
+              icon: Icons.checklist_rtl,
+              message: 'Belum ada bahan yang dipilih.',
+              actionLabel: 'Pilih Bahan',
+              onAction: onPickIngredients,
+            )
+          else
+            recipes.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 48),
+                child: Center(child: CircularProgressIndicator()),
               ),
-            );
-          }),
+              error: (e, _) => _EmptyState(
+                icon: Icons.cloud_off_outlined,
+                message: 'Gagal memuat resep. Periksa koneksi lalu coba lagi.',
+                actionLabel: 'Coba Lagi',
+                onAction: () => ref.invalidate(recommendationsProvider),
+              ),
+              data: (list) {
+                if (list.isEmpty) {
+                  return _EmptyState(
+                    icon: Icons.search_off,
+                    message: 'Belum ada resep yang cocok dengan bahan ini.',
+                    actionLabel: 'Ubah Bahan',
+                    onAction: onPickIngredients,
+                  );
+                }
+                return Column(
+                  children: [
+                    for (final r in list)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: RecommendationCard(
+                          title: r.title,
+                          matchedWith: r.matchedNames.map(titleCase).join(', '),
+                          overlayLabel: '${r.matched}/${r.total} bahan',
+                          matchPercent: r.percent,
+                          stepsCount: r.totalSteps,
+                          bookmarked: bookmarks.contains(r.id),
+                          onBookmarkTap: () =>
+                              toggleBookmark(context, ref, r.id),
+                          onCookTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => RecipeDetailPage(recipeId: r.id),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({
+    required this.icon,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Icon(icon, size: 40, color: AppColors.textMuted),
+          const SizedBox(height: 12),
+          Text(message,
+              textAlign: TextAlign.center, style: AppTextStyles.bodyMuted),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 16),
+            AppButton(
+              label: actionLabel!,
+              fullWidth: false,
+              onPressed: onAction,
+            ),
+          ],
         ],
       ),
     );

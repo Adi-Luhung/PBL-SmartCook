@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/utils/text_utils.dart';
+import '../../data/models.dart';
+import '../../providers/app_providers.dart';
 
 class _IngredientItem {
   const _IngredientItem({
@@ -122,24 +126,111 @@ const _allCategories = [
   ),
 ];
 
+// ── Katalog dari database ───────────────────────────────────────────────────
+
+const _categoryOrder = [
+  'Protein & Lauk',
+  'Sayuran',
+  'Bumbu & Rempah',
+  'Saus & Penyedap',
+  'Karbohidrat & Tepung',
+  'Susu & Olahan',
+  'Kacang, Biji & Kelapa',
+  'Buah',
+  'Minyak & Lemak',
+  'Bahan Dasar',
+  'Lainnya',
+];
+
+const _categoryColors = <String, Color>{
+  'Protein & Lauk': Color(0xFFF59E0B),
+  'Sayuran': Color(0xFF14B8A6),
+  'Bumbu & Rempah': Color(0xFF10B981),
+  'Saus & Penyedap': Color(0xFFEF4444),
+  'Karbohidrat & Tepung': Color(0xFFA855F7),
+  'Susu & Olahan': Color(0xFF3B82F6),
+  'Kacang, Biji & Kelapa': Color(0xFF92400E),
+  'Buah': Color(0xFFF97316),
+  'Minyak & Lemak': Color(0xFFEAB308),
+  'Bahan Dasar': Color(0xFF64748B),
+  'Lainnya': Color(0xFF94A3B8),
+};
+
+const _categoryIcons = <String, IconData>{
+  'Protein & Lauk': Icons.set_meal_outlined,
+  'Sayuran': Icons.eco_outlined,
+  'Bumbu & Rempah': Icons.spa_outlined,
+  'Saus & Penyedap': Icons.water_drop_outlined,
+  'Karbohidrat & Tepung': Icons.rice_bowl_outlined,
+  'Susu & Olahan': Icons.local_drink_outlined,
+  'Kacang, Biji & Kelapa': Icons.grain_outlined,
+  'Buah': Icons.local_grocery_store_outlined,
+  'Minyak & Lemak': Icons.opacity,
+  'Bahan Dasar': Icons.kitchen_outlined,
+  'Lainnya': Icons.restaurant_outlined,
+};
+
+/// Kategori yang dianggap "Diet Sehat" untuk filter tab (pola yang sama dengan
+/// desain awal: protein & sayur ya, bumbu/saus tidak).
+const _dietCategories = {'Protein & Lauk', 'Sayuran', 'Buah'};
+
+/// Foto bahan yang sudah ada di assets (nama baku di database -> berkas).
+const _knownAssets = <String, String>{
+  'telur': 'telur_ayam.jpg',
+  'tahu': 'tahu_putih.jpg',
+  'tempe': 'tempe.jpg',
+  'ayam': 'daging_ayam.jpg',
+  'kangkung': 'kangkung.jpg',
+  'bayam': 'bayam.jpg',
+  'bawang merah': 'bawang_merah.jpg',
+  'bawang putih': 'bawang_putih.jpg',
+  'cabai rawit': 'cabai_rawit.jpg',
+};
+
+List<_CategoryGroup> _groupsFrom(List<CatalogIngredient> catalog) {
+  final byCategory = <String, List<_IngredientItem>>{};
+  for (final i in catalog) {
+    final asset = _knownAssets[i.name];
+    byCategory
+        .putIfAbsent(i.category, () => [])
+        .add(
+          _IngredientItem(
+            name: titleCase(i.name),
+            assetPath:
+                'assets/images/ingredients/${asset ?? '${i.name.replaceAll(' ', '_')}.jpg'}',
+            icon: _categoryIcons[i.category] ?? Icons.restaurant_outlined,
+            isDiet: _dietCategories.contains(i.category),
+          ),
+        );
+  }
+  final titles = [
+    ..._categoryOrder.where(byCategory.containsKey),
+    ...byCategory.keys.where((k) => !_categoryOrder.contains(k)),
+  ];
+  return [
+    for (final t in titles)
+      _CategoryGroup(
+        title: t,
+        indicatorColor: _categoryColors[t] ?? const Color(0xFF94A3B8),
+        items: byCategory[t]!, // sudah terurut populer dulu dari query
+      ),
+  ];
+}
+
 /// Halaman Input Bahan Makanan & Masakan sesuai desain mockup Figma/SmartCook.
-class InputBahanPage extends StatefulWidget {
+class InputBahanPage extends ConsumerStatefulWidget {
   const InputBahanPage({super.key, this.onSearchRecipes});
 
   final VoidCallback? onSearchRecipes;
 
   @override
-  State<InputBahanPage> createState() => _InputBahanPageState();
+  ConsumerState<InputBahanPage> createState() => _InputBahanPageState();
 }
 
-class _InputBahanPageState extends State<InputBahanPage> {
+class _InputBahanPageState extends ConsumerState<InputBahanPage> {
   final TextEditingController _searchController = TextEditingController();
-  final Set<String> _selected = {
-    'Telur Ayam',
-    'Tahu Putih',
-    'Bawang Merah',
-    'Cabai Rawit',
-  };
+  final Set<String> _selected = {};
+  bool _searching = false;
 
   // State untuk filter dan expand/collapse
   int _activeDietTab = 0; // 0 = Semua, 1 = Diet Sehat
@@ -147,11 +238,7 @@ class _InputBahanPageState extends State<InputBahanPage> {
   String _searchQuery = '';
 
   bool _isBahanTerpilihExpanded = true;
-  final Map<String, bool> _expandedCategories = {
-    'Protein & Lauk': true,
-    'Sayuran Segar': false,
-    'Bumbu Dapur': false,
-  };
+  final Map<String, bool> _expandedCategories = {'Protein & Lauk': true};
 
   @override
   void initState() {
@@ -191,10 +278,80 @@ class _InputBahanPageState extends State<InputBahanPage> {
     });
   }
 
+  void _snack(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: error ? AppColors.danger : AppColors.primary,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+  }
+
+  /// Enter di kolom pencarian: cocokkan teks (termasuk sinonim/typo) ke bahan
+  /// baku di database, lalu tambahkan sebagai bahan terpilih.
+  Future<void> _addTyped() async {
+    final text = _searchController.text.trim();
+    if (text.isEmpty) return;
+    try {
+      final hit = await ref.read(recipeRepositoryProvider).findIngredient(text);
+      if (!mounted) return;
+      if (hit == null) {
+        _snack('Bahan "$text" tidak dikenali.', error: true);
+        return;
+      }
+      final name = titleCase(hit.name);
+      setState(() => _selected.add(name));
+      _searchController.clear();
+      _snack('Ditambahkan: $name');
+    } catch (_) {
+      if (mounted) _snack('Gagal mencari bahan. Periksa koneksi.', error: true);
+    }
+  }
+
+  /// Tombol "Cari Resep": ubah nama bahan jadi ID, simpan ke provider,
+  /// lalu pindah ke tab Rekomendasi.
+  Future<void> _search() async {
+    if (_selected.isEmpty) {
+      _snack('Pilih minimal satu bahan dulu.', error: true);
+      return;
+    }
+    setState(() => _searching = true);
+    try {
+      final names = _selected.toList();
+      final ids = await ref
+          .read(recipeRepositoryProvider)
+          .resolveIngredientIds(names);
+      if (!mounted) return;
+      if (ids.isEmpty) {
+        _snack('Bahan yang dipilih belum dikenali.', error: true);
+        return;
+      }
+      ref
+          .read(searchQueryProvider.notifier)
+          .set(SearchQuery(names: names, ids: ids));
+      widget.onSearchRecipes?.call();
+    } catch (_) {
+      if (mounted) _snack('Gagal mencari resep. Periksa koneksi.', error: true);
+    } finally {
+      if (mounted) setState(() => _searching = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Filter kategori berdasarkan filter tab horizontal
-    final displayedCategories = _allCategories.where((category) {
+    final catalog = ref.watch(ingredientCatalogProvider);
+    // Daftar bahan dari database; kalau gagal dimuat, pakai daftar bawaan.
+    final List<_CategoryGroup> allCategories = catalog.when(
+      data: _groupsFrom,
+      loading: () => const <_CategoryGroup>[],
+      error: (_, __) => _allCategories,
+    );
+
+    final displayedCategories = allCategories.where((category) {
       if (_activeCategoryFilter != 'Semua Kategori' &&
           category.title != _activeCategoryFilter) {
         return false;
@@ -209,7 +366,10 @@ class _InputBahanPageState extends State<InputBahanPage> {
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 children: [
                   // 1. Header (Logo SmartCook di kanan atas)
                   _buildHeader(),
@@ -230,11 +390,21 @@ class _InputBahanPageState extends State<InputBahanPage> {
                   ],
 
                   // 5. Category Filter Chips (Horizontal)
-                  _buildCategoryFilterRow(),
+                  _buildCategoryFilterRow(
+                    allCategories.map((c) => c.title).toList(),
+                  ),
                   const SizedBox(height: 16),
 
+                  if (catalog.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+
                   // 6. Accordion per Kategori
-                  ...displayedCategories.map((category) => _buildCategorySection(category)),
+                  ...displayedCategories.map(
+                    (category) => _buildCategorySection(category),
+                  ),
 
                   const SizedBox(height: 16),
                 ],
@@ -320,27 +490,40 @@ class _InputBahanPageState extends State<InputBahanPage> {
       ),
       child: TextField(
         controller: _searchController,
+        textInputAction: TextInputAction.search,
+        onSubmitted: (_) => _addTyped(),
         style: const TextStyle(
           fontFamily: AppTextStyles.fontFamily,
           fontSize: 14,
           color: Color(0xFF1F2937),
         ),
         decoration: InputDecoration(
-          hintText: 'Ketik nama bahan... (misal: telur, tahu)',
+          hintText: 'Ketik nama bahan lalu Enter (misal: telur, tahu)',
           hintStyle: const TextStyle(
             fontFamily: AppTextStyles.fontFamily,
             fontSize: 13.5,
             color: Color(0xFF9CA3AF),
           ),
-          prefixIcon: const Icon(Icons.search, size: 22, color: Color(0xFF9CA3AF)),
+          prefixIcon: const Icon(
+            Icons.search,
+            size: 22,
+            color: Color(0xFF9CA3AF),
+          ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.close, size: 18, color: Color(0xFF9CA3AF)),
+                  icon: const Icon(
+                    Icons.close,
+                    size: 18,
+                    color: Color(0xFF9CA3AF),
+                  ),
                   onPressed: () => _searchController.clear(),
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
         ),
       ),
     );
@@ -408,7 +591,9 @@ class _InputBahanPageState extends State<InputBahanPage> {
             fontFamily: AppTextStyles.fontFamily,
             fontSize: 13.5,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? const Color(0xFF0E6E4E) : const Color(0xFF64748B),
+            color: isSelected
+                ? const Color(0xFF0E6E4E)
+                : const Color(0xFF64748B),
           ),
         ),
       ),
@@ -429,7 +614,8 @@ class _InputBahanPageState extends State<InputBahanPage> {
           // Header Card
           InkWell(
             onTap: () => setState(
-                () => _isBahanTerpilihExpanded = !_isBahanTerpilihExpanded),
+              () => _isBahanTerpilihExpanded = !_isBahanTerpilihExpanded,
+            ),
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -447,7 +633,10 @@ class _InputBahanPageState extends State<InputBahanPage> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFD1FAE5),
                       borderRadius: BorderRadius.circular(999),
@@ -484,8 +673,12 @@ class _InputBahanPageState extends State<InputBahanPage> {
                 runSpacing: 8,
                 children: _selected.map((item) {
                   return Container(
-                    padding:
-                        const EdgeInsets.only(left: 12, right: 6, top: 6, bottom: 6),
+                    padding: const EdgeInsets.only(
+                      left: 12,
+                      right: 6,
+                      top: 6,
+                      bottom: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(999),
@@ -543,8 +736,11 @@ class _InputBahanPageState extends State<InputBahanPage> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.delete_outline,
-                            size: 16, color: Color(0xFF6B7280)),
+                        Icon(
+                          Icons.delete_outline,
+                          size: 16,
+                          color: Color(0xFF6B7280),
+                        ),
                         SizedBox(width: 4),
                         Text(
                           'Hapus Semua',
@@ -568,13 +764,8 @@ class _InputBahanPageState extends State<InputBahanPage> {
   }
 
   /// Kategori Filter Chips Horizontal ("Semua Kategori", "Protein & Lauk", dsb.)
-  Widget _buildCategoryFilterRow() {
-    final categories = [
-      'Semua Kategori',
-      'Protein & Lauk',
-      'Sayuran Segar',
-      'Bumbu Dapur',
-    ];
+  Widget _buildCategoryFilterRow(List<String> titles) {
+    final categories = ['Semua Kategori', ...titles];
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -587,8 +778,10 @@ class _InputBahanPageState extends State<InputBahanPage> {
               onTap: () => setState(() => _activeCategoryFilter = cat),
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF111827) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -631,7 +824,10 @@ class _InputBahanPageState extends State<InputBahanPage> {
       return const SizedBox.shrink();
     }
 
-    final isExpanded = _expandedCategories[category.title] ?? false;
+    // Saat mencari, semua kategori yang punya hasil otomatis terbuka.
+    final isExpanded =
+        _searchQuery.isNotEmpty ||
+        (_expandedCategories[category.title] ?? false);
     final selectedInCat = category.items
         .where((item) => _selected.contains(item.name))
         .length;
@@ -681,8 +877,10 @@ class _InputBahanPageState extends State<InputBahanPage> {
                   const SizedBox(width: 8),
                   // Badge jumlah bahan / dipilih
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: selectedInCat > 0
                           ? const Color(0xFFD1FAE5)
@@ -847,7 +1045,10 @@ class _InputBahanPageState extends State<InputBahanPage> {
               // Bagian Label Nama Bahan
               Container(
                 color: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
                 child: Text(
                   item.name,
                   maxLines: 1,
@@ -885,21 +1086,7 @@ class _InputBahanPageState extends State<InputBahanPage> {
         width: double.infinity,
         height: 52,
         child: ElevatedButton(
-          onPressed: () {
-            if (widget.onSearchRecipes != null) {
-              widget.onSearchRecipes!();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Mencari resep dengan ${_selected.length} bahan terpilih...',
-                  ),
-                  duration: const Duration(seconds: 2),
-                  backgroundColor: AppColors.primary,
-                ),
-              );
-            }
-          },
+          onPressed: _searching ? null : _search,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF08543D),
             foregroundColor: Colors.white,
@@ -908,15 +1095,24 @@ class _InputBahanPageState extends State<InputBahanPage> {
               borderRadius: BorderRadius.circular(14),
             ),
           ),
-          child: const Text(
-            'Cari Resep',
-            style: TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
+          child: _searching
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text(
+                  'Cari Resep',
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
         ),
       ),
     );

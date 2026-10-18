@@ -9,8 +9,8 @@ class HomeRecipeListItem extends StatelessWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    required this.durationMinutes,
-    required this.calories,
+    required this.stepsCount,
+    required this.ingredientsLabel,
     this.bookmarked = false,
     this.onBookmarkTap,
     this.onTap,
@@ -18,8 +18,8 @@ class HomeRecipeListItem extends StatelessWidget {
 
   final String title;
   final String subtitle;
-  final int durationMinutes;
-  final int calories;
+  final int stepsCount;
+  final String ingredientsLabel;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
   final VoidCallback? onTap;
@@ -83,14 +83,15 @@ class HomeRecipeListItem extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.schedule, size: 14, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Text('$durationMinutes mnt', style: AppTextStyles.caption),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.local_fire_department_outlined,
+                      const Icon(Icons.format_list_numbered,
                           size: 14, color: AppColors.textMuted),
                       const SizedBox(width: 4),
-                      Text('$calories kkal', style: AppTextStyles.caption),
+                      Text('$stepsCount langkah', style: AppTextStyles.caption),
+                      const SizedBox(width: 10),
+                      const Icon(Icons.kitchen_outlined,
+                          size: 14, color: AppColors.textMuted),
+                      const SizedBox(width: 4),
+                      Text(ingredientsLabel, style: AppTextStyles.caption),
                     ],
                   ),
                 ],

@@ -7,7 +7,7 @@ import '../profile/profile_page.dart';
 import '../../presentation/recommendation/recommendation_page.dart';
 
 /// Shell utama setelah login: bottom nav 4 tab + IndexedStack.
-/// Semua tab sudah tampil dengan data dummy — belum query Supabase.
+/// Data tiap tab diambil dari Supabase lewat provider Riverpod.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -24,7 +24,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final pages = [
       BerandaPage(onNavigate: _goTo),
-      const RecommendationPage(),
+      RecommendationPage(onPickIngredients: () => _goTo(2)),
       InputBahanPage(onSearchRecipes: () => _goTo(1)),
       const ProfilePage(),
     ];
