@@ -51,16 +51,18 @@ class _BerandaPageState extends State<BerandaPage> {
             style: AppTextStyles.bodyMuted,
           ),
           const SizedBox(height: 20),
-          _SearchCard(onSearchTap: () => widget.onNavigate(1)),
+          _SearchCard(onSearchTap: () {}),
           const SizedBox(height: 12),
           _HighlightCard(onTap: () => widget.onNavigate(2)),
           const SizedBox(height: 24),
           Row(
             children: [
-              Text('Rekomendasi Masakan', style: AppTextStyles.h2),
-              const Spacer(),
+              const Expanded(
+                child: Text('Rekomendasi Masakan', style: AppTextStyles.h2),
+              ),
+              const SizedBox(width: 8),
               GestureDetector(
-                onTap: () => widget.onNavigate(1),
+                onTap: () {},
                 child: Row(
                   children: [
                     Text(
@@ -99,7 +101,7 @@ class _BerandaPageState extends State<BerandaPage> {
           const SizedBox(height: 8),
           AppButton(
             label: 'Jelajahi Semua Resep Masakan',
-            onPressed: () => widget.onNavigate(1),
+            onPressed: () {},
           ),
         ],
       ),

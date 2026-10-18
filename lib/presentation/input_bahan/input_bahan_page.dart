@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import 'widgets/confirm_search_dialog.dart';
 
 class _IngredientItem {
   const _IngredientItem({
@@ -125,9 +126,14 @@ const _allCategories = [
 
 /// Halaman Input Bahan Makanan & Masakan sesuai desain mockup Figma/SmartCook.
 class InputBahanPage extends StatefulWidget {
-  const InputBahanPage({super.key, this.onSearchRecipes});
+  const InputBahanPage({
+    super.key,
+    this.onSearchRecipes,
+    this.onSearchRecipesWithIngredients,
+  });
 
   final VoidCallback? onSearchRecipes;
+  final ValueChanged<List<String>>? onSearchRecipesWithIngredients;
 
   @override
   State<InputBahanPage> createState() => _InputBahanPageState();
@@ -868,6 +874,35 @@ class _InputBahanPageState extends State<InputBahanPage> {
     );
   }
 
+  void _showSearchConfirmation() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogCtx) => ConfirmSearchDialog(
+        onConfirmSearch: () {
+          if (widget.onSearchRecipesWithIngredients != null) {
+            widget.onSearchRecipesWithIngredients!(_selected.toList());
+          } else if (widget.onSearchRecipes != null) {
+            widget.onSearchRecipes!();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Mencari resep dengan ${_selected.length} bahan terpilih...',
+                ),
+                duration: const Duration(seconds: 2),
+                backgroundColor: AppColors.primary,
+              ),
+            );
+          }
+        },
+        onAddMore: () {
+          // Tutup dialog dan biarkan pengguna lanjut memilih/menambah bahan
+        },
+      ),
+    );
+  }
+
   /// Tombol Bottom CTA "Cari Resep"
   Widget _buildBottomCta() {
     return Container(
@@ -886,21 +921,7 @@ class _InputBahanPageState extends State<InputBahanPage> {
         width: double.infinity,
         height: 52,
         child: ElevatedButton(
-          onPressed: () {
-            if (widget.onSearchRecipes != null) {
-              widget.onSearchRecipes!();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Mencari resep dengan ${_selected.length} bahan terpilih...',
-                  ),
-                  duration: const Duration(seconds: 2),
-                  backgroundColor: AppColors.primary,
-                ),
-              );
-            }
-          },
+          onPressed: _showSearchConfirmation,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF08543D),
             foregroundColor: Colors.white,
