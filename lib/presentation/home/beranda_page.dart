@@ -178,16 +178,93 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
+  Widget _buildTopBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.2),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
+              ),
+              children: [
+                TextSpan(
+                  text: 'Smart',
+                  style: TextStyle(color: Color(0xFF0F172A)),
+                ),
+                TextSpan(
+                  text: 'Cook',
+                  style: TextStyle(color: Color(0xFF084E38)),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () => widget.onNavigate(3),
+            borderRadius: BorderRadius.circular(20),
+            child: Tooltip(
+              message: 'Profil',
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
+                ),
+                child: ClipOval(
+                  child: Image.network(
+                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop',
+                    width: 36,
+                    height: 36,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 36,
+                      height: 36,
+                      color: const Color(0xFF818CF8),
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: BookmarkService.instance,
       builder: (context, _) {
         return SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+          child: Column(
             children: [
-              Text('Halo, Mau Masak Apa?', style: AppTextStyles.h1),
+              _buildTopBar(),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Text('Halo, Mau Masak Apa?', style: AppTextStyles.h1),
               const SizedBox(height: 4),
               Text(
                 'Pilih bahan yang ada, kami temukan resepnya, atau cari resep makanan favoritmu.',
@@ -246,7 +323,10 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
             ],
           ),
-        );
+        ),
+      ],
+    ),
+  );
       },
     );
   }

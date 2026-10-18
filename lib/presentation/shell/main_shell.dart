@@ -80,6 +80,7 @@ class _MainShellState extends State<MainShell> {
         child: RecommendationPage(
           selectedIngredients: _selectedIngredients,
           onAddIngredients: _onBackToInputBahan,
+          onProfileTap: () => _goTo(3),
         ),
       );
     }
@@ -107,7 +108,9 @@ class _MainShellState extends State<MainShell> {
           }
         },
       ),
-      const EksplorasiPage(),
+      EksplorasiPage(
+        onProfileTap: () => _goTo(3),
+      ),
       _buildInputTabContent(),
       const ProfilePage(),
     ];

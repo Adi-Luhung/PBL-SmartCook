@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_text_styles.dart';
+import '../profile/profile_page.dart';
 import 'widgets/recommendation_card.dart';
 
 class _RecipeData {
@@ -28,10 +29,12 @@ class RecommendationPage extends StatefulWidget {
     super.key,
     this.selectedIngredients,
     this.onAddIngredients,
+    this.onProfileTap,
   });
 
   final List<String>? selectedIngredients;
   final VoidCallback? onAddIngredients;
+  final VoidCallback? onProfileTap;
 
   @override
   State<RecommendationPage> createState() => _RecommendationPageState();
@@ -39,6 +42,16 @@ class RecommendationPage extends StatefulWidget {
 
 class _RecommendationPageState extends State<RecommendationPage> {
   final Set<String> _bookmarked = {};
+
+  void _openProfile() {
+    if (widget.onProfileTap != null) {
+      widget.onProfileTap!();
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ProfilePage()),
+      );
+    }
+  }
 
   static const _defaultIngredients = ['Tahu', 'Telur', 'Bawang', 'Cabai'];
 
@@ -285,30 +298,37 @@ class _RecommendationPageState extends State<RecommendationPage> {
               ],
             ),
           ),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.2),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
+          InkWell(
+            onTap: _openProfile,
+            borderRadius: BorderRadius.circular(20),
+            child: Tooltip(
+              message: 'Profil',
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 20,
+                child: const Center(
+                  child: Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
               ),
             ),
           ),
