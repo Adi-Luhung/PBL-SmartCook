@@ -20,12 +20,13 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   static const _recipes = [
     (
-      title: 'Tahu Telur Bumbu Kecap Pedas',
-      matchedWith: 'Tahu, Telur, Bawang, Cabai',
+      title: 'Tahu Telur Bumbu Kacang',
+      matchedWith: 'Tahu, Telur, Bawang, Kacang',
       duration: 15,
       match: 95,
       steps: 3,
       isDiet: false,
+      imageAsset: 'assets/images/recipes/tahu_telur_kacang.jpg',
     ),
     (
       title: 'Orak-Arik Telur Tahu Sehat',
@@ -34,6 +35,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
       match: 85,
       steps: 2,
       isDiet: true,
+      imageAsset: 'assets/images/recipes/orak_arik_telur_tahu.jpeg',
     ),
     (
       title: 'Sambal Goreng Tahu Telur',
@@ -42,6 +44,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
       match: 75,
       steps: 4,
       isDiet: false,
+      imageAsset: 'assets/images/recipes/sambal_goreng.jpg',
     ),
   ];
 
@@ -79,6 +82,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                 matchPercent: r.match,
                 stepsCount: r.steps,
                 isDiet: r.isDiet,
+                imageAsset: r.imageAsset,
                 bookmarked: _bookmarked.contains(r.title),
                 onBookmarkTap: () => setState(() {
                   if (_bookmarked.contains(r.title)) {

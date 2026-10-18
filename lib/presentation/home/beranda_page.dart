@@ -26,14 +26,17 @@ class _BerandaPageState extends State<BerandaPage> {
       subtitle: 'Cocok untuk dada ayam & daun bawang',
       duration: 25,
       calories: 320,
+      imageAsset: 'assets/images/recipes/sup_ayam_jahe.jpg',
     ),
     (
       title: 'Tumis Tahu Telur Saus Tiram',
       subtitle: 'Gunakan stok tahu dan telur ayam',
       duration: 15,
       calories: 240,
+      imageAsset: 'assets/images/recipes/tumis_tahu_telur.jpg',
     ),
   ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +83,7 @@ class _BerandaPageState extends State<BerandaPage> {
                 subtitle: item.subtitle,
                 durationMinutes: item.duration,
                 calories: item.calories,
+                imageAsset: item.imageAsset,
                 bookmarked: _bookmarked.contains(item.title),
                 onBookmarkTap: () => setState(() {
                   if (_bookmarked.contains(item.title)) {

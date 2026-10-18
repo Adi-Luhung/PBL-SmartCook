@@ -15,6 +15,7 @@ class RecommendationCard extends StatelessWidget {
     required this.matchPercent,
     required this.stepsCount,
     this.isDiet = false,
+    this.imageAsset,
     this.bookmarked = false,
     this.onBookmarkTap,
     this.onCookTap,
@@ -26,6 +27,7 @@ class RecommendationCard extends StatelessWidget {
   final int matchPercent;
   final int stepsCount;
   final bool isDiet;
+  final String? imageAsset;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
   final VoidCallback? onCookTap;
@@ -45,13 +47,17 @@ class RecommendationCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Container(
-                  height: 120,
+                child: SizedBox(
+                  height: 160,
                   width: double.infinity,
-                  color: AppColors.border.withOpacity(0.5),
-                  child: const Center(
-                    child: Icon(Icons.image_outlined, color: AppColors.textMuted),
-                  ),
+                  child: imageAsset != null
+                      ? Image.asset(
+                          imageAsset!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildImagePlaceholder(),
+                        )
+                      : _buildImagePlaceholder(),
                 ),
               ),
               Positioned(
@@ -129,6 +135,15 @@ class RecommendationCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      color: AppColors.border.withOpacity(0.5),
+      child: const Center(
+        child: Icon(Icons.restaurant, size: 40, color: AppColors.textMuted),
       ),
     );
   }

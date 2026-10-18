@@ -78,13 +78,13 @@ const _allCategories = [
       ),
       _IngredientItem(
         name: 'Wortel',
-        assetPath: 'assets/images/ingredients/kangkung.jpg',
+        assetPath: 'assets/images/ingredients/wortel.jpg',
         icon: Icons.spa_outlined,
         isDiet: true,
       ),
       _IngredientItem(
         name: 'Tomat',
-        assetPath: 'assets/images/ingredients/cabai_rawit.jpg',
+        assetPath: 'assets/images/ingredients/tomat.jpg',
         icon: Icons.circle_outlined,
         isDiet: true,
       ),
@@ -114,13 +114,14 @@ const _allCategories = [
       ),
       _IngredientItem(
         name: 'Garam & Merica',
-        assetPath: 'assets/images/ingredients/bawang_putih.jpg',
+        assetPath: 'assets/images/ingredients/garam_merica.jpg',
         icon: Icons.grain_outlined,
         isDiet: false,
       ),
     ],
   ),
 ];
+
 
 /// Halaman Input Bahan Makanan & Masakan sesuai desain mockup Figma/SmartCook.
 class InputBahanPage extends StatefulWidget {

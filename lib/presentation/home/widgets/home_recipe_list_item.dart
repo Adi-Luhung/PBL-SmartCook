@@ -11,6 +11,7 @@ class HomeRecipeListItem extends StatelessWidget {
     required this.subtitle,
     required this.durationMinutes,
     required this.calories,
+    this.imageAsset,
     this.bookmarked = false,
     this.onBookmarkTap,
     this.onTap,
@@ -20,6 +21,7 @@ class HomeRecipeListItem extends StatelessWidget {
   final String subtitle;
   final int durationMinutes;
   final int calories;
+  final String? imageAsset;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
   final VoidCallback? onTap;
@@ -41,11 +43,17 @@ class HomeRecipeListItem extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: 64,
-                height: 64,
-                color: AppColors.border.withOpacity(0.5),
-                child: const Icon(Icons.image_outlined, color: AppColors.textMuted),
+              child: SizedBox(
+                width: 72,
+                height: 72,
+                child: imageAsset != null
+                    ? Image.asset(
+                        imageAsset!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildPlaceholder(),
+                      )
+                    : _buildPlaceholder(),
               ),
             ),
             const SizedBox(width: 12),
@@ -101,4 +109,12 @@ class HomeRecipeListItem extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: AppColors.border.withOpacity(0.5),
+      child: const Icon(Icons.restaurant, color: AppColors.textMuted),
+    );
+  }
 }
+
