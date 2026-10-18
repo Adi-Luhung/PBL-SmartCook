@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'core/services/profile_photo_service.dart';
 import 'core/theme/app_theme.dart';
-import 'presentation/auth/auth_page.dart';
+import 'presentation/splash/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +19,7 @@ class SmartCookApp extends StatelessWidget {
       title: 'SmartCook',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const AuthPage(),
+      home: const SplashScreen(),
     );
   }
 }
