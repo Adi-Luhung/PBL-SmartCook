@@ -7,26 +7,22 @@ class _RecipeData {
   const _RecipeData({
     required this.title,
     required this.matchedWith,
-    this.extraNote,
-    this.isMissingNote = false,
     required this.calories,
     required this.matchPercent,
     required this.imageAsset,
+    this.isDiet = false,
+    this.stepsCount = 3,
   });
 
   final String title;
   final String matchedWith;
-  final String? extraNote;
-  final bool isMissingNote;
   final int calories;
   final int matchPercent;
   final String imageAsset;
+  final bool isDiet;
+  final int stepsCount;
 }
 
-/// Halaman Rekomendasi Resep hasil dari input bahan.
-/// Tampilan disesuaikan 100% dengan mockup SmartCook:
-/// Header SmartCook + avatar, badge "X Bahan Tersedia", chips bahan,
-/// 3 kartu resep dengan badge cocok & kalori, serta card "Punya bahan lain di rumah?".
 class RecommendationPage extends StatefulWidget {
   const RecommendationPage({
     super.key,
@@ -34,11 +30,7 @@ class RecommendationPage extends StatefulWidget {
     this.onAddIngredients,
   });
 
-  /// Daftar bahan terpilih dari halaman input bahan.
-  /// Jika kosong/null, akan memakai daftar default sesuai mockup.
   final List<String>? selectedIngredients;
-
-  /// Callback saat user menekan tombol tambah bahan ("+" chip atau card bawah)
   final VoidCallback? onAddIngredients;
 
   @override
@@ -57,24 +49,26 @@ class _RecommendationPageState extends State<RecommendationPage> {
       calories: 320,
       matchPercent: 95,
       imageAsset: 'assets/images/recipes/tahu_telur_kecap.jpg',
+      isDiet: false,
+      stepsCount: 3,
     ),
     _RecipeData(
       title: 'Orak-Arik Telur Tahu Sehat',
       matchedWith: 'Tahu, Telur, Bawang',
-      extraNote: 'butuh sedikit garam',
-      isMissingNote: false,
       calories: 220,
       matchPercent: 85,
       imageAsset: 'assets/images/recipes/orak_arik_telur_tahu.jpeg',
+      isDiet: true,
+      stepsCount: 2,
     ),
     _RecipeData(
       title: 'Sambal Goreng Tahu Telur',
       matchedWith: 'Tahu, Telur, Cabai',
-      extraNote: 'Kurang: Tomat',
-      isMissingNote: true,
       calories: 350,
       matchPercent: 75,
       imageAsset: 'assets/images/recipes/sambal_goreng.jpg',
+      isDiet: false,
+      stepsCount: 4,
     ),
   ];
 
@@ -216,23 +210,15 @@ class _RecommendationPageState extends State<RecommendationPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Top Header: Logo SmartCook + Avatar Profil ──
             _buildTopBar(),
-
-            // ── Scrollable Body ──
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 children: [
-                  // 1. Title + Badge Bahan Tersedia
                   _buildHeadlineRow(ingredients.length),
                   const SizedBox(height: 14),
-
-                  // 2. Horizontal Chips Bahan Terpilih
                   _buildIngredientsChips(ingredients),
                   const SizedBox(height: 20),
-
-                  // 3. Daftar Kartu Rekomendasi Resep
                   ...List.generate(_recipes.length, (i) {
                     final r = _recipes[i];
                     return Padding(
@@ -240,10 +226,10 @@ class _RecommendationPageState extends State<RecommendationPage> {
                       child: RecommendationCard(
                         title: r.title,
                         matchedWith: r.matchedWith,
-                        extraNote: r.extraNote,
-                        isMissingNote: r.isMissingNote,
                         calories: r.calories,
                         matchPercent: r.matchPercent,
+                        stepsCount: r.stepsCount,
+                        isDiet: r.isDiet,
                         imageAsset: r.imageAsset,
                         bookmarked: _bookmarked.contains(r.title),
                         onBookmarkTap: () => setState(() {
@@ -266,7 +252,6 @@ class _RecommendationPageState extends State<RecommendationPage> {
     );
   }
 
-  /// Top Bar dengan logo SmartCook di kiri dan Avatar di kanan
   Widget _buildTopBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -332,133 +317,160 @@ class _RecommendationPageState extends State<RecommendationPage> {
     );
   }
 
-  /// Headline: "Rekomendasi untukmu" dan Badge "X Bahan Tersedia"
   Widget _buildHeadlineRow(int count) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Rekomendasi\nuntukmu',
-                style: TextStyle(
-                  fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                  height: 1.15,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Berdasarkan bahan pilihan di kulkasmu',
-                style: TextStyle(
-                  fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
+        const Text(
+          'Rekomendasi untukmu',
+          style: TextStyle(
+            fontFamily: AppTextStyles.fontFamily,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE8FAF1),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFC7F2DB), width: 1.2),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0D7C55),
-                  shape: BoxShape.circle,
-                ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Text(
+              'Berdasarkan bahan pilihanmu',
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF64748B),
               ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF084E38),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   Text(
                     '$count Bahan',
                     style: const TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF08543D),
-                      height: 1.15,
-                    ),
-                  ),
-                  const Text(
-                    'Tersedia',
-                    style: TextStyle(
-                      fontFamily: AppTextStyles.fontFamily,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF08543D),
-                      height: 1.15,
+                      color: Color(0xFF1E293B),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  /// Chips bahan-bahan terpilih (horizontal scroll)
   Widget _buildIngredientsChips(List<String> ingredients) {
     return SizedBox(
-      height: 38,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        clipBehavior: Clip.none,
+      height: 36,
+      child: Row(
         children: [
-          ...ingredients.map(
-            (name) => Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8FAF1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFB5EAD0), width: 1.2),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.check,
-                      size: 14,
-                      color: Color(0xFF0D7C55),
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF08543D),
-                      ),
-                    ),
-                  ],
-                ),
+          GestureDetector(
+            key: const ValueKey('add_ingredient_chip_button'),
+            onTap: widget.onAddIngredients,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.tune_rounded,
+                    size: 15,
+                    color: Color(0xFF084E38),
+                  ),
+                  SizedBox(width: 5),
+                  Text(
+                    'Ubah',
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF084E38),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 1.5,
+            height: 20,
+            decoration: BoxDecoration(
+              color: const Color(0xFFCBD5E1),
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+          Expanded(
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.antiAlias,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: ingredients.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final name = ingredients[index];
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2EBF8),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check,
+                        size: 14,
+                        color: Color(0xFF1E293B),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],

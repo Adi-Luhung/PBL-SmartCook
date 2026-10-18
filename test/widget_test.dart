@@ -20,13 +20,12 @@ void main() {
     );
 
     // Verify title and subtitle
-    expect(find.text('Rekomendasi\nuntukmu'), findsOneWidget);
+    expect(find.text('Rekomendasi untukmu'), findsOneWidget);
     expect(
-        find.text('Berdasarkan bahan pilihan di kulkasmu'), findsOneWidget);
+        find.text('Berdasarkan bahan pilihanmu'), findsOneWidget);
 
     // Verify ingredients count badge
     expect(find.text('4 Bahan'), findsOneWidget);
-    expect(find.text('Tersedia'), findsOneWidget);
 
     // Verify chips
     expect(find.text('Tahu'), findsOneWidget);

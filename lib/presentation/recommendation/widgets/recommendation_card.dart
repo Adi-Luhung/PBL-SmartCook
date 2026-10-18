@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
-/// Kartu resep hasil rekomendasi sesuai dengan desain mockup SmartCook.
-/// Memuat badge persentase cocok, tombol bookmark, badge kalori,
-/// baris bahan yang cocok / kurang, dan tombol "Masak Sekarang ->".
 class RecommendationCard extends StatelessWidget {
   const RecommendationCard({
     super.key,
@@ -56,7 +53,6 @@ class RecommendationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gambar dengan Badge-badge di atasnya
           Stack(
             children: [
               ClipRRect(
@@ -74,48 +70,85 @@ class RecommendationCard extends StatelessWidget {
                       : _buildImagePlaceholder(),
                 ),
               ),
-
-              // Badge Cocok di Kiri Atas
               Positioned(
                 top: 12,
                 left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF094E38),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF094E38),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        size: 13,
-                        color: Colors.white,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$matchPercent% Cocok',
+                            style: const TextStyle(
+                              fontFamily: AppTextStyles.fontFamily,
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$matchPercent% Cocok',
-                        style: const TextStyle(
-                          fontFamily: AppTextStyles.fontFamily,
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isDiet ? const Color(0xFF059669) : const Color(0xFFD97706),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isDiet ? Icons.eco_rounded : Icons.restaurant_menu_rounded,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isDiet ? 'Diet Sehat' : 'Non-Diet',
+                            style: const TextStyle(
+                              fontFamily: AppTextStyles.fontFamily,
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              // Tombol Bookmark di Kanan Atas
               Positioned(
                 top: 12,
                 right: 12,
@@ -146,7 +179,6 @@ class RecommendationCard extends StatelessWidget {
                 ),
               ),
 
-              // Badge Kalori di Kanan Bawah
               Positioned(
                 bottom: 12,
                 right: 12,
@@ -188,13 +220,11 @@ class RecommendationCard extends StatelessWidget {
             ],
           ),
 
-          // Detail Resep di Bawah Gambar
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Judul Resep
                 Text(
                   title,
                   style: const TextStyle(
@@ -206,95 +236,82 @@ class RecommendationCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-
-                // Info Bahan Cocok & Kurang
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
-                      child: Icon(
-                        Icons.check,
-                        size: 15,
-                        color: Color(0xFF0D7C55),
-                      ),
+                    const Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 17,
+                      color: Color(0xFF0D7C55),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontFamily: AppTextStyles.fontFamily,
-                            fontSize: 13,
-                            color: Color(0xFF64748B),
-                            height: 1.35,
-                          ),
-                          children: [
-                            const TextSpan(
-                              text: 'Cocok: ',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF1E293B),
-                              ),
-                            ),
-                            TextSpan(
-                              text: matchedWith,
-                              style: const TextStyle(color: Color(0xFF64748B)),
-                            ),
-                            if (extraNote != null && extraNote!.isNotEmpty) ...[
-                              const TextSpan(
-                                text: ' • ',
-                                style: TextStyle(color: Color(0xFF94A3B8)),
-                              ),
-                              TextSpan(
-                                text: extraNote,
-                                style: TextStyle(
-                                  fontWeight: isMissingNote ? FontWeight.w600 : FontWeight.w400,
-                                  color: isMissingNote
-                                      ? const Color(0xFFC2410C)
-                                      : const Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ],
+                      child: Text(
+                        matchedWith,
+                        style: const TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF475569),
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
-
-                // Tombol "Masak Sekarang ->"
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton(
-                    onPressed: onCookTap,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF084E38),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        const Icon(
+                          Icons.autorenew_rounded,
+                          size: 17,
+                          color: Color(0xFF64748B),
+                        ),
+                        const SizedBox(width: 5),
                         Text(
-                          'Masak Sekarang',
-                          style: TextStyle(
+                          '$stepsCount Langkah',
+                          style: const TextStyle(
                             fontFamily: AppTextStyles.fontFamily,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF334155),
                           ),
                         ),
-                        SizedBox(width: 6),
-                        Icon(Icons.arrow_forward, size: 16, color: Colors.white),
                       ],
                     ),
-                  ),
+                    ElevatedButton(
+                      onPressed: onCookTap,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF084E38),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Masak Sekarang',
+                            style: TextStyle(
+                              fontFamily: AppTextStyles.fontFamily,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Icon(Icons.arrow_forward_rounded, size: 15, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
