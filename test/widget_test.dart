@@ -128,7 +128,7 @@ void main() {
     await tester.tap(find.text('Eksplorasi'));
     await tester.pumpAndSettle();
     expect(find.text('Eksplorasi Resep'), findsOneWidget);
-    expect(find.text('Segera Hadir'), findsOneWidget);
+    expect(find.text('Paling Populer'), findsOneWidget);
 
     // 3. Tap Input in bottom nav
     await tester.tap(find.text('Input'));
@@ -147,7 +147,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Now on RecommendationPage, still in Input tab!
-    expect(find.text('Rekomendasi\nuntukmu'), findsOneWidget);
+    expect(find.text('Rekomendasi untukmu'), findsOneWidget);
 
     // Tap "Input" navbar button again to toggle back to InputBahanPage
     await tester.tap(find.text('Input'));

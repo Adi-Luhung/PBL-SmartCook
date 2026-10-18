@@ -1,101 +1,64 @@
 import 'package:flutter/material.dart';
 
+import '../../core/services/bookmark_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/app_button.dart';
+import '../explore/detail_resep_page.dart';
 import 'edit_profile_page.dart';
 
-/// Tab Profil — tampilan statis, data masih dummy (belum query Supabase).
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          children: [
-
-            // ── Avatar + Info Pengguna ──
-            _ProfileHeader(),
-            const SizedBox(height: 20),
-
-            // ── Stat Pills ──
-            const Row(
+    return ListenableBuilder(
+      listenable: BookmarkService.instance,
+      builder: (context, _) {
+        final savedCount = BookmarkService.instance.savedRecipes.length;
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               children: [
-                Expanded(
-                    child: _StatPill(label: 'Masakan Dibuat', value: '14')),
-                SizedBox(width: 12),
-                Expanded(
-                    child: _StatPill(label: 'Resep Disimpan', value: '8')),
+                const _ProfileHeader(),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    const Expanded(
+                        child: _StatPill(label: 'Masakan Dibuat', value: '14')),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: _StatPill(
+                            label: 'Resep Disimpan', value: '$savedCount')),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const _HealthCard(),
+                const SizedBox(height: 20),
+                const _SavedRecipesSection(),
+                const SizedBox(height: 20),
+                const _CookDocSection(),
+                const SizedBox(height: 28),
+                AppButton(
+                  label: 'Ganti Akun',
+                  variant: AppButtonVariant.outline,
+                  icon: Icons.swap_horiz_rounded,
+                  onPressed: () {},
+                ),
+                const SizedBox(height: 12),
+                const _LogoutButton(),
+                const SizedBox(height: 16),
               ],
             ),
-            const SizedBox(height: 20),
-
-            // ── Kesehatan & Kalori ──
-            _HealthCard(),
-            const SizedBox(height: 20),
-
-            // ── Resep Disimpan ──
-            _SavedRecipesSection(),
-            const SizedBox(height: 20),
-
-            // ── Dokumentasi Masak ──
-            _CookDocSection(),
-            const SizedBox(height: 28),
-
-            // ── Aksi Akun ──
-            AppButton(
-              label: 'Ganti Akun',
-              variant: AppButtonVariant.outline,
-              icon: Icons.swap_horiz_rounded,
-              onPressed: () {},
-            ),
-            const SizedBox(height: 12),
-            _LogoutButton(),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────
-// Banner Sukses
-// ─────────────────────────────────────────────────
-class _SuccessBanner extends StatelessWidget {
-  const _SuccessBanner({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.success.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.check_circle, color: AppColors.success, size: 20),
-          const SizedBox(width: 10),
-          Text(
-            message,
-            style: const TextStyle(
-              color: AppColors.success,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
+
 
 // ─────────────────────────────────────────────────
 // Header Profil
@@ -386,20 +349,11 @@ class _HealthCard extends StatelessWidget {
 class _SavedRecipesSection extends StatelessWidget {
   const _SavedRecipesSection();
 
-  static const _recipes = [
-    {'name': 'Sup Telur Tomat', 'time': '12 Menit', 'ingredients': '3 Bahan'},
-    {
-      'name': 'Orak Arik Tahu Gurih',
-      'time': '10 Menit',
-      'ingredients': '4 Bahan'
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final recipes = BookmarkService.instance.savedRecipes;
     return Column(
       children: [
-        // Header
         Row(
           children: [
             const Icon(Icons.bookmark_outline,
@@ -415,9 +369,9 @@ class _SavedRecipesSection extends StatelessWidget {
                 color: const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                '8 Resep',
-                style: TextStyle(
+              child: Text(
+                '${recipes.length} Resep',
+                style: const TextStyle(
                   color: Color(0xFFD97706),
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
@@ -427,26 +381,36 @@ class _SavedRecipesSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-
-        // List resep
         Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
-          child: Column(
-            children: _recipes
-                .asMap()
-                .entries
-                .map((e) => _SavedRecipeItem(
-                      name: e.value['name']!,
-                      time: e.value['time']!,
-                      ingredients: e.value['ingredients']!,
-                      showDivider: e.key < _recipes.length - 1,
-                    ))
-                .toList(),
-          ),
+          child: recipes.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      'Belum ada resep yang disimpan',
+                      style: TextStyle(
+                        fontFamily: AppTextStyles.fontFamily,
+                        color: AppColors.textMuted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                )
+              : Column(
+                  children: recipes
+                      .asMap()
+                      .entries
+                      .map((e) => _SavedRecipeItem(
+                            recipe: e.value,
+                            showDivider: e.key < recipes.length - 1,
+                          ))
+                      .toList(),
+                ),
         ),
       ],
     );
@@ -455,57 +419,95 @@ class _SavedRecipesSection extends StatelessWidget {
 
 class _SavedRecipeItem extends StatelessWidget {
   const _SavedRecipeItem({
-    required this.name,
-    required this.time,
-    required this.ingredients,
+    required this.recipe,
     required this.showDivider,
   });
 
-  final String name;
-  final String time;
-  final String ingredients;
+  final SavedRecipe recipe;
   final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              // Foto placeholder
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  color: AppColors.border,
-                  child: const Icon(Icons.fastfood_outlined,
-                      color: AppColors.textMuted),
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailResepPage(
+                  title: recipe.name,
+                  imageUrl: recipe.imageUrl,
+                  imageAsset: recipe.imageAsset,
+                  calories: recipe.calories,
+                  portions: recipe.portions,
+                  isDiet: recipe.isDiet,
+                  ingredientList: recipe.ingredientList,
+                  stepList: recipe.stepList,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: AppTextStyles.label),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.access_time,
-                            size: 13, color: AppColors.textMuted),
-                        const SizedBox(width: 4),
-                        Text('$time • $ingredients',
-                            style: AppTextStyles.caption),
-                      ],
-                    ),
-                  ],
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: recipe.imageUrl != null
+                        ? Image.network(
+                            recipe.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                recipe.imageAsset != null
+                                    ? Image.asset(
+                                        recipe.imageAsset!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        color: const Color(0xFFE8EEFB),
+                                        child: const Icon(Icons.restaurant,
+                                            color: AppColors.textMuted),
+                                      ),
+                          )
+                        : (recipe.imageAsset != null
+                            ? Image.asset(
+                                recipe.imageAsset!,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                color: const Color(0xFFE8EEFB),
+                                child: const Icon(Icons.restaurant,
+                                    color: AppColors.textMuted),
+                              )),
+                  ),
                 ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.textMuted),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(recipe.name, style: AppTextStyles.label),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time,
+                              size: 13, color: AppColors.textMuted),
+                          const SizedBox(width: 4),
+                          Text('${recipe.time} • ${recipe.ingredients}',
+                              style: AppTextStyles.caption),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: AppColors.textMuted),
+              ],
+            ),
           ),
         ),
         if (showDivider)
