@@ -257,9 +257,6 @@ class _RecommendationPageState extends State<RecommendationPage> {
                       ),
                     );
                   }),
-
-                  // 4. Card "Punya bahan lain di rumah?"
-                  _buildAddMorePromptCard(),
                 ],
               ),
             ),
@@ -464,127 +461,9 @@ class _RecommendationPageState extends State<RecommendationPage> {
               ),
             ),
           ),
-
-          // Tombol '+' untuk tambah bahan lain
-          GestureDetector(
-            key: const ValueKey('add_ingredient_chip_button'),
-            onTap: widget.onAddIngredients,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.add,
-                  size: 16,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  /// Kartu bagian bawah: "Punya bahan lain di rumah?"
-  Widget _buildAddMorePromptCard() {
-    return Container(
-      margin: const EdgeInsets.only(top: 8, bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0FAF5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFCDEFE0), width: 1.2),
-      ),
-      child: Column(
-        children: [
-          // Icon Kulkas
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.kitchen_outlined,
-                size: 26,
-                color: Color(0xFF084E38),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Title
-          const Text(
-            'Punya bahan lain di rumah?',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          // Subtitle
-          const Text(
-            'Tambahkan bumbu atau sisa sayuran di kulkas untuk membuka lebih banyak pilihan masakan lezat.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF64748B),
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          // Outlined Button "+ Tambah Bahan Masakan"
-          InkWell(
-            onTap: widget.onAddIngredients,
-            borderRadius: BorderRadius.circular(24),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFF6EE7B7), width: 1.5),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add, color: Color(0xFF084E38), size: 18),
-                  SizedBox(width: 6),
-                  Text(
-                    'Tambah Bahan Masakan',
-                    style: TextStyle(
-                      fontFamily: AppTextStyles.fontFamily,
-                      color: Color(0xFF084E38),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
