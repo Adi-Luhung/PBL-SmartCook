@@ -119,8 +119,13 @@ void main() {
     // 1. Initially on Beranda
     expect(find.text('Halo, Mau Masak Apa?'), findsOneWidget);
 
-    // Tapping "Lihat Semua (24)" should NOT navigate away
+    // Tapping "Lihat Semua (24)" navigates to Eksplorasi
     await tester.tap(find.text('Lihat Semua (24)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Eksplorasi Resep'), findsOneWidget);
+
+    // Tap Beranda in bottom nav to return to Beranda
+    await tester.tap(find.text('Beranda'));
     await tester.pumpAndSettle();
     expect(find.text('Halo, Mau Masak Apa?'), findsOneWidget);
 
@@ -155,5 +160,36 @@ void main() {
 
     // Returns to InputBahanPage
     expect(find.text('Bahan dan Masakan'), findsOneWidget);
+  });
+
+  testWidgets('Header profile button navigates to Profile tab',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MainShell(),
+      ),
+    );
+
+    // On Beranda: tap header profile button (Tooltip 'Profil')
+    expect(find.byTooltip('Profil'), findsOneWidget);
+    await tester.tap(find.byTooltip('Profil'));
+    await tester.pumpAndSettle();
+
+    // Verify now on ProfilePage (shows user name Heisenberg)
+    expect(find.text('Heisenberg'), findsOneWidget);
+
+    // Switch to Eksplorasi
+    await tester.tap(find.text('Eksplorasi'));
+    await tester.pumpAndSettle();
+    expect(find.text('Eksplorasi Resep'), findsOneWidget);
+
+    // Tap header profile button on Eksplorasi
+    await tester.tap(find.byTooltip('Profil'));
+    await tester.pumpAndSettle();
+    expect(find.text('Heisenberg'), findsOneWidget);
   });
 }

@@ -9,7 +9,7 @@ class HomeRecipeListItem extends StatelessWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    required this.durationMinutes,
+    this.durationMinutes,
     required this.calories,
     this.imageAsset,
     this.bookmarked = false,
@@ -19,7 +19,7 @@ class HomeRecipeListItem extends StatelessWidget {
 
   final String title;
   final String subtitle;
-  final int durationMinutes;
+  final int? durationMinutes;
   final int calories;
   final String? imageAsset;
   final bool bookmarked;
@@ -91,14 +91,21 @@ class HomeRecipeListItem extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.schedule, size: 14, color: AppColors.textMuted),
+                      const Icon(
+                        Icons.local_fire_department_rounded,
+                        size: 15,
+                        color: Color(0xFFEA580C),
+                      ),
                       const SizedBox(width: 4),
-                      Text('$durationMinutes mnt', style: AppTextStyles.caption),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.local_fire_department_outlined,
-                          size: 14, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Text('$calories kkal', style: AppTextStyles.caption),
+                      Text(
+                        '$calories kkal',
+                        style: const TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFEA580C),
+                        ),
+                      ),
                     ],
                   ),
                 ],

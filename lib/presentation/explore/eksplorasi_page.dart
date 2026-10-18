@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/bookmark_service.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/widgets/profile_avatar.dart';
+import '../profile/profile_page.dart';
 import 'detail_resep_page.dart';
 
 
@@ -38,7 +40,16 @@ class _ExploreRecipeItem {
 }
 
 class EksplorasiPage extends StatefulWidget {
-  const EksplorasiPage({super.key});
+  const EksplorasiPage({
+    super.key,
+    this.onProfileTap,
+    this.searchKeyword = '',
+    this.searchRequestId = 0,
+  });
+
+  final VoidCallback? onProfileTap;
+  final String searchKeyword;
+  final int searchRequestId;
 
   @override
   State<EksplorasiPage> createState() => _EksplorasiPageState();
@@ -50,6 +61,16 @@ class _EksplorasiPageState extends State<EksplorasiPage> {
   late List<_ExploreRecipeItem> _shuffledRecipes;
   String _selectedCategory = 'Semua';
   String _searchQuery = '';
+
+  void _openProfile() {
+    if (widget.onProfileTap != null) {
+      widget.onProfileTap!();
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ProfilePage()),
+      );
+    }
+  }
 
 
   static const _allRecipesList = [
@@ -451,6 +472,29 @@ class _EksplorasiPageState extends State<EksplorasiPage> {
   void initState() {
     super.initState();
     _shuffledRecipes = List<_ExploreRecipeItem>.from(_allRecipesList)..shuffle();
+    if (widget.searchKeyword.trim().isNotEmpty) {
+      _applyExternalSearch(widget.searchKeyword);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant EksplorasiPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.searchRequestId != oldWidget.searchRequestId) {
+      setState(() {
+        _applyExternalSearch(widget.searchKeyword);
+      });
+    }
+  }
+
+  void _applyExternalSearch(String searchKeyword) {
+    final trimmedKeyword = searchKeyword.trim();
+    _searchController.value = TextEditingValue(
+      text: trimmedKeyword,
+      selection: TextSelection.collapsed(offset: trimmedKeyword.length),
+    );
+    _searchQuery = trimmedKeyword;
+    _selectedCategory = 'Semua';
   }
 
   @override
@@ -621,34 +665,12 @@ class _EksplorasiPageState extends State<EksplorasiPage> {
                             ],
                           ),
                         ),
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFFE2E8F0),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: ClipOval(
-                            child: Image.network(
-                              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop',
-                              width: 36,
-                              height: 36,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(
-                                width: 36,
-                                height: 36,
-                                color: const Color(0xFF818CF8),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
+                        InkWell(
+                          onTap: _openProfile,
+                          borderRadius: BorderRadius.circular(20),
+                          child: const Tooltip(
+                            message: 'Profil',
+                            child: ProfileAvatar(radius: 18, iconSize: 20),
                           ),
                         ),
                       ],

@@ -23,6 +23,8 @@ class _MainShellState extends State<MainShell> {
   int _index = 0;
   bool _showRecommendationInInput = false;
   List<String> _selectedIngredients = ['Tahu', 'Telur', 'Bawang', 'Cabai'];
+  String _exploreSearchKeyword = '';
+  int _exploreSearchRequestId = 0;
 
   void _goTo(int index) {
     setState(() {
@@ -39,6 +41,14 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       _showRecommendationInInput = false;
       _index = 2;
+    });
+  }
+
+  void _openExploreWithSearch(String searchKeyword) {
+    setState(() {
+      _exploreSearchKeyword = searchKeyword;
+      _exploreSearchRequestId++;
+      _index = 1;
     });
   }
 
@@ -80,6 +90,7 @@ class _MainShellState extends State<MainShell> {
         child: RecommendationPage(
           selectedIngredients: _selectedIngredients,
           onAddIngredients: _onBackToInputBahan,
+          onProfileTap: () => _goTo(3),
         ),
       );
     }
@@ -106,8 +117,13 @@ class _MainShellState extends State<MainShell> {
             _goTo(index);
           }
         },
+        onSearchRecipes: _openExploreWithSearch,
       ),
-      const EksplorasiPage(),
+      EksplorasiPage(
+        onProfileTap: () => _goTo(3),
+        searchKeyword: _exploreSearchKeyword,
+        searchRequestId: _exploreSearchRequestId,
+      ),
       _buildInputTabContent(),
       const ProfilePage(),
     ];

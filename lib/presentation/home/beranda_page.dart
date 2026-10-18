@@ -4,13 +4,19 @@ import '../../core/services/bookmark_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/app_button.dart';
+import '../../core/widgets/profile_avatar.dart';
 import '../explore/detail_resep_page.dart';
 import 'widgets/home_recipe_list_item.dart';
 
 class BerandaPage extends StatefulWidget {
-  const BerandaPage({super.key, required this.onNavigate});
+  const BerandaPage({
+    super.key,
+    required this.onNavigate,
+    required this.onSearchRecipes,
+  });
 
   final ValueChanged<int> onNavigate;
+  final ValueChanged<String> onSearchRecipes;
 
   @override
   State<BerandaPage> createState() => _BerandaPageState();
@@ -178,23 +184,72 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
+  Widget _buildTopBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.2),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
+              ),
+              children: [
+                TextSpan(
+                  text: 'Smart',
+                  style: TextStyle(color: Color(0xFF0F172A)),
+                ),
+                TextSpan(
+                  text: 'Cook',
+                  style: TextStyle(color: Color(0xFF084E38)),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () => widget.onNavigate(3),
+            borderRadius: BorderRadius.circular(20),
+            child: const Tooltip(
+              message: 'Profil',
+              child: ProfileAvatar(radius: 18, iconSize: 20),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: BookmarkService.instance,
       builder: (context, _) {
         return SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+          child: Column(
             children: [
-              Text('Halo, Mau Masak Apa?', style: AppTextStyles.h1),
+              _buildTopBar(),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Text('Halo, Mau Masak Apa?', style: AppTextStyles.h1),
               const SizedBox(height: 4),
               Text(
                 'Pilih bahan yang ada, kami temukan resepnya, atau cari resep makanan favoritmu.',
                 style: AppTextStyles.bodyMuted,
               ),
               const SizedBox(height: 20),
-              _SearchCard(onSearchTap: () => widget.onNavigate(1)),
+              _SearchCard(onSearch: widget.onSearchRecipes),
               const SizedBox(height: 12),
               _HighlightCard(onTap: () => widget.onNavigate(2)),
               const SizedBox(height: 24),
@@ -246,16 +301,39 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
             ],
           ),
-        );
+        ),
+      ],
+    ),
+  );
       },
     );
   }
 }
 
-class _SearchCard extends StatelessWidget {
-  const _SearchCard({required this.onSearchTap});
+class _SearchCard extends StatefulWidget {
+  const _SearchCard({required this.onSearch});
 
-  final VoidCallback onSearchTap;
+  final ValueChanged<String> onSearch;
+
+  @override
+  State<_SearchCard> createState() => _SearchCardState();
+}
+
+class _SearchCardState extends State<_SearchCard> {
+  final TextEditingController _searchController = TextEditingController();
+
+  void _submitSearch() {
+    final searchKeyword = _searchController.text.trim();
+    if (searchKeyword.isEmpty) return;
+    widget.onSearch(searchKeyword);
+    _searchController.clear();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -286,16 +364,44 @@ class _SearchCard extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text('Misal: Soto Ayam, Rendang', style: AppTextStyles.bodyMuted),
-                ),
-                GestureDetector(
-                  onTap: onSearchTap,
-                  child: Row(
-                    children: [
-                      Text('Cari', style: AppTextStyles.label.copyWith(color: AppColors.primary)),
-                      const Icon(Icons.arrow_forward, size: 14, color: AppColors.primary),
-                    ],
+                  child: TextField(
+                    controller: _searchController,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _submitSearch(),
+                    style: AppTextStyles.body,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      hintText: 'Misal: Soto Ayam, Rendang',
+                      hintStyle: AppTextStyles.bodyMuted,
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
                   ),
+                ),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _searchController,
+                  builder: (context, value, _) {
+                    final isEnabled = value.text.trim().isNotEmpty;
+                    final actionColor =
+                        isEnabled ? AppColors.primary : AppColors.textMuted;
+                    return GestureDetector(
+                      onTap: isEnabled ? _submitSearch : null,
+                      child: Row(
+                        children: [
+                          Text(
+                            'Cari',
+                            style: AppTextStyles.label
+                                .copyWith(color: actionColor),
+                          ),
+                          Icon(
+                            Icons.arrow_forward,
+                            size: 14,
+                            color: actionColor,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
