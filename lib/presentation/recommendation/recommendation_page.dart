@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_text_styles.dart';
+import '../../core/widgets/profile_avatar.dart';
 import '../profile/profile_page.dart';
 import 'widgets/recommendation_card.dart';
 
@@ -301,35 +302,9 @@ class _RecommendationPageState extends State<RecommendationPage> {
           InkWell(
             onTap: _openProfile,
             borderRadius: BorderRadius.circular(20),
-            child: Tooltip(
+            child: const Tooltip(
               message: 'Profil',
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.2),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
+              child: ProfileAvatar(radius: 18, iconSize: 20),
             ),
           ),
         ],

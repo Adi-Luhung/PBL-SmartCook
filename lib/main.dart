@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
+import 'core/services/profile_photo_service.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/auth/auth_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ProfilePhotoService.instance.load();
   runApp(const SmartCookApp());
 }
 
@@ -17,7 +20,6 @@ class SmartCookApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       home: const AuthPage(),
-      
     );
   }
 }

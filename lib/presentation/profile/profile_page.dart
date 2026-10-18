@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/services/bookmark_service.dart';
+import '../../core/services/profile_photo_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/app_button.dart';
@@ -60,60 +64,129 @@ class ProfilePage extends StatelessWidget {
 }
 
 
-// ─────────────────────────────────────────────────
-// Header Profil
-// ─────────────────────────────────────────────────
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends StatefulWidget {
   const _ProfileHeader();
 
   @override
+  State<_ProfileHeader> createState() => _ProfileHeaderState();
+}
+
+class _ProfileHeaderState extends State<_ProfileHeader> {
+  final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
+
+  Future<void> _pickPhoto() async {
+    setState(() => _isLoading = true);
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        await ProfilePhotoService.instance.updatePhoto(image.path);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal memilih foto. Silakan coba lagi.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Avatar dengan badge centang
-        Stack(
-          alignment: Alignment.bottomRight,
+    return ListenableBuilder(
+      listenable: ProfilePhotoService.instance,
+      builder: (context, _) {
+        final photoPath = ProfilePhotoService.instance.photoPath;
+        final hasPhoto = photoPath != null && File(photoPath).existsSync();
+        return Column(
           children: [
-            const CircleAvatar(
-              radius: 44,
-              backgroundImage: null,
-              backgroundColor: AppColors.border,
-              child: Icon(Icons.person, size: 40, color: AppColors.textMuted),
+            GestureDetector(
+              onTap: _pickPhoto,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 44,
+                    backgroundColor: AppColors.border,
+                    backgroundImage:
+                        hasPhoto ? FileImage(File(photoPath)) : null,
+                    child: hasPhoto
+                        ? null
+                        : const Icon(
+                            Icons.person,
+                            size: 40,
+                            color: AppColors.textMuted,
+                          ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: _isLoading
+                        ? const CircleAvatar(
+                            radius: 10,
+                            backgroundColor: AppColors.border,
+                            child: SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          )
+                        : const CircleAvatar(
+                            radius: 10,
+                            backgroundColor: AppColors.primary,
+                            child: Icon(
+                              Icons.camera_alt,
+                              size: 10,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
             ),
-            Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
+            const SizedBox(height: 6),
+            Text(
+              'Ubah Foto',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
               ),
-              child: const CircleAvatar(
-                radius: 10,
-                backgroundColor: AppColors.primary,
-                child: Icon(Icons.check, size: 12, color: Colors.white),
-              ),
+            ),
+            const SizedBox(height: 12),
+            const Text('Heisenberg', style: AppTextStyles.h2),
+            const SizedBox(height: 4),
+            const Text(
+              'heisenberg123@gmail.com',
+              style: AppTextStyles.bodyMuted,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _InfoPill(label: 'Perempuan'),
+                const SizedBox(width: 10),
+                _InfoPill(label: '24 Tahun'),
+              ],
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-
-        // Nama
-        const Text('Heisenberg', style: AppTextStyles.h2),
-        const SizedBox(height: 4),
-
-        // Email
-        const Text('heisenberg123@gmail.com', style: AppTextStyles.bodyMuted),
-        const SizedBox(height: 10),
-
-        // Gender & Usia
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _InfoPill(label: 'Perempuan'),
-            const SizedBox(width: 10),
-            _InfoPill(label: '24 Tahun'),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 }

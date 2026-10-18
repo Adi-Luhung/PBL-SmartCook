@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/bookmark_service.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/widgets/profile_avatar.dart';
 import '../profile/profile_page.dart';
 import 'detail_resep_page.dart';
 
@@ -637,38 +638,9 @@ class _EksplorasiPageState extends State<EksplorasiPage> {
                         InkWell(
                           onTap: _openProfile,
                           borderRadius: BorderRadius.circular(20),
-                          child: Tooltip(
+                          child: const Tooltip(
                             message: 'Profil',
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFFE2E8F0),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: ClipOval(
-                                child: Image.network(
-                                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop',
-                                  width: 36,
-                                  height: 36,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                    width: 36,
-                                    height: 36,
-                                    color: const Color(0xFF818CF8),
-                                    child: const Icon(
-                                      Icons.person,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                            child: ProfileAvatar(radius: 18, iconSize: 20),
                           ),
                         ),
                       ],
