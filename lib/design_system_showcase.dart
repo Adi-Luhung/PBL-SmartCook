@@ -86,8 +86,8 @@ class _DesignSystemShowcaseState extends State<DesignSystemShowcase> {
           Text('Recipe Card', style: AppTextStyles.h2),
           const SizedBox(height: 12),
           RecipeCard(
-            title: 'Tahu Telur Bumbu Kecap Pedas',
-            subtitle: 'Cocok: Tahu, Telur, Bawang, Cabai',
+            title: 'Tahu Telur Bumbu Kacang',
+            subtitle: 'Cocok: Tahu, Telur, Bawang, Kacang',
             durationMinutes: 15,
             matchPercent: 95,
             isDiet: false,
