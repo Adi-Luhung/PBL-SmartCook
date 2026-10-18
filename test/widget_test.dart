@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:smart_cook/core/widgets/app_bottom_nav.dart';
 import 'package:smart_cook/presentation/input_bahan/widgets/confirm_search_dialog.dart';
 import 'package:smart_cook/presentation/recommendation/recommendation_page.dart';
 import 'package:smart_cook/presentation/shell/main_shell.dart';
 
 void main() {
-  testWidgets('RecommendationPage renders header, chips, and recipe cards',
+  testWidgets('RecommendationPage renders header, chips, and recipe cards without tambah bahan',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.0;
@@ -19,13 +20,12 @@ void main() {
     );
 
     // Verify title and subtitle
-    expect(find.text('Rekomendasi\nuntukmu'), findsOneWidget);
+    expect(find.text('Rekomendasi untukmu'), findsOneWidget);
     expect(
-        find.text('Berdasarkan bahan pilihan di kulkasmu'), findsOneWidget);
+        find.text('Berdasarkan bahan pilihanmu'), findsOneWidget);
 
     // Verify ingredients count badge
     expect(find.text('4 Bahan'), findsOneWidget);
-    expect(find.text('Tersedia'), findsOneWidget);
 
     // Verify chips
     expect(find.text('Tahu'), findsOneWidget);
@@ -37,17 +37,19 @@ void main() {
     expect(find.text('Tahu Telur Bumbu Kecap Pedas'), findsOneWidget);
     expect(find.text('Orak-Arik Telur Tahu Sehat'), findsOneWidget);
 
-    // Scroll to find the rest
+    // Scroll to find the 3rd card
     await tester.scrollUntilVisible(
-      find.text('Punya bahan lain di rumah?'),
+      find.text('Sambal Goreng Tahu Telur'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Sambal Goreng Tahu Telur'), findsOneWidget);
-    expect(find.text('Punya bahan lain di rumah?'), findsOneWidget);
-    expect(find.text('Tambah Bahan Masakan'), findsOneWidget);
+
+    // Verify "Tambah Bahan Masakan" & "Punya bahan lain di rumah?" are removed
+    expect(find.text('Punya bahan lain di rumah?'), findsNothing);
+    expect(find.text('Tambah Bahan Masakan'), findsNothing);
   });
 
   testWidgets('ConfirmSearchDialog triggers confirm callback',
@@ -99,7 +101,7 @@ void main() {
     expect(addMore, isTrue);
   });
 
-  testWidgets('MainShell Input tab handles search and stays on Input tab',
+  testWidgets('MainShell Input tab handles search and custom navbar icon',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.0;
@@ -110,6 +112,9 @@ void main() {
         home: MainShell(),
       ),
     );
+
+    // Verify custom InboxNavbarIcon exists in bottom nav
+    expect(find.byType(InboxNavbarIcon), findsOneWidget);
 
     // 1. Initially on Beranda
     expect(find.text('Halo, Mau Masak Apa?'), findsOneWidget);
@@ -123,7 +128,7 @@ void main() {
     await tester.tap(find.text('Eksplorasi'));
     await tester.pumpAndSettle();
     expect(find.text('Eksplorasi Resep'), findsOneWidget);
-    expect(find.text('Segera Hadir'), findsOneWidget);
+    expect(find.text('Paling Populer'), findsOneWidget);
 
     // 3. Tap Input in bottom nav
     await tester.tap(find.text('Input'));
@@ -142,18 +147,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // Now on RecommendationPage, still in Input tab!
-    expect(find.text('Rekomendasi\nuntukmu'), findsOneWidget);
+    expect(find.text('Rekomendasi untukmu'), findsOneWidget);
 
-    // Scroll to find "+ Tambah Bahan Masakan" at the bottom
-    await tester.scrollUntilVisible(
-      find.text('Tambah Bahan Masakan'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-
-    // Tap "+ Tambah Bahan Masakan" to return to InputBahanPage
-    await tester.tap(find.text('Tambah Bahan Masakan'));
+    // Tap "Input" navbar button again to toggle back to InputBahanPage
+    await tester.tap(find.text('Input'));
     await tester.pumpAndSettle();
 
     // Returns to InputBahanPage
