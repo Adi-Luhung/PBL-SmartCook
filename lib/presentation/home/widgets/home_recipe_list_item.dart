@@ -112,7 +112,7 @@ class HomeRecipeListItem extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      color: AppColors.border.withOpacity(0.5),
+      color: AppColors.border.withValues(alpha: 0.5),
       child: const Icon(Icons.restaurant, color: AppColors.textMuted),
     );
   }
