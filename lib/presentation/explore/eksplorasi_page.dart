@@ -40,9 +40,16 @@ class _ExploreRecipeItem {
 }
 
 class EksplorasiPage extends StatefulWidget {
-  const EksplorasiPage({super.key, this.onProfileTap});
+  const EksplorasiPage({
+    super.key,
+    this.onProfileTap,
+    this.searchKeyword = '',
+    this.searchRequestId = 0,
+  });
 
   final VoidCallback? onProfileTap;
+  final String searchKeyword;
+  final int searchRequestId;
 
   @override
   State<EksplorasiPage> createState() => _EksplorasiPageState();
@@ -465,6 +472,29 @@ class _EksplorasiPageState extends State<EksplorasiPage> {
   void initState() {
     super.initState();
     _shuffledRecipes = List<_ExploreRecipeItem>.from(_allRecipesList)..shuffle();
+    if (widget.searchKeyword.trim().isNotEmpty) {
+      _applyExternalSearch(widget.searchKeyword);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant EksplorasiPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.searchRequestId != oldWidget.searchRequestId) {
+      setState(() {
+        _applyExternalSearch(widget.searchKeyword);
+      });
+    }
+  }
+
+  void _applyExternalSearch(String searchKeyword) {
+    final trimmedKeyword = searchKeyword.trim();
+    _searchController.value = TextEditingValue(
+      text: trimmedKeyword,
+      selection: TextSelection.collapsed(offset: trimmedKeyword.length),
+    );
+    _searchQuery = trimmedKeyword;
+    _selectedCategory = 'Semua';
   }
 
   @override
