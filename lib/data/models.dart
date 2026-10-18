@@ -1,11 +1,7 @@
 /// Model data SmartCook (hasil query Supabase).
 
 class IngredientHit {
-  const IngredientHit({
-    required this.id,
-    required this.name,
-    required this.sim,
-  });
+  const IngredientHit({required this.id, required this.name, required this.sim});
 
   final int id;
   final String name;
@@ -23,7 +19,13 @@ class RecipeMatch {
     required this.total,
     required this.score,
     required this.matchedNames,
+    this.kalori,
+    this.beratG,
   });
+
+  /// Total kalori & berat seluruh bahan resep (bukan per porsi).
+  final double? kalori;
+  final double? beratG;
 
   final int id;
   final String title;
@@ -43,17 +45,19 @@ class RecipeMatch {
   int get percent => (score * 100).round().clamp(0, 100);
 
   factory RecipeMatch.fromJson(Map<String, dynamic> j) => RecipeMatch(
-    id: (j['id'] as num).toInt(),
-    title: j['title'] as String,
-    category: j['category'] as String?,
-    totalSteps: (j['total_steps'] as num?)?.toInt() ?? 0,
-    matched: (j['matched'] as num).toInt(),
-    total: (j['total'] as num).toInt(),
-    score: (j['score'] as num).toDouble(),
-    matchedNames: ((j['matched_names'] as List?) ?? const [])
-        .map((e) => e.toString())
-        .toList(),
-  );
+        id: (j['id'] as num).toInt(),
+        title: j['title'] as String,
+        category: j['category'] as String?,
+        totalSteps: (j['total_steps'] as num?)?.toInt() ?? 0,
+        matched: (j['matched'] as num).toInt(),
+        total: (j['total'] as num).toInt(),
+        score: (j['score'] as num).toDouble(),
+        matchedNames: ((j['matched_names'] as List?) ?? const [])
+            .map((e) => e.toString())
+            .toList(),
+        kalori: (j['kalori'] as num?)?.toDouble(),
+        beratG: (j['berat_g'] as num?)?.toDouble(),
+      );
 }
 
 /// Ringkasan resep untuk daftar (beranda, resep disimpan).
@@ -64,7 +68,13 @@ class RecipeSummary {
     required this.category,
     required this.totalSteps,
     required this.totalIngredients,
+    this.kalori,
+    this.beratG,
   });
+
+  /// Total kalori & berat seluruh bahan resep (bukan per porsi).
+  final double? kalori;
+  final double? beratG;
 
   final int id;
   final String title;
@@ -73,12 +83,14 @@ class RecipeSummary {
   final int totalIngredients;
 
   factory RecipeSummary.fromJson(Map<String, dynamic> j) => RecipeSummary(
-    id: (j['id'] as num).toInt(),
-    title: j['title'] as String,
-    category: j['category'] as String?,
-    totalSteps: (j['total_steps'] as num?)?.toInt() ?? 0,
-    totalIngredients: (j['total_ingredients'] as num?)?.toInt() ?? 0,
-  );
+        id: (j['id'] as num).toInt(),
+        title: j['title'] as String,
+        category: j['category'] as String?,
+        totalSteps: (j['total_steps'] as num?)?.toInt() ?? 0,
+        totalIngredients: (j['total_ingredients'] as num?)?.toInt() ?? 0,
+        kalori: (j['kalori'] as num?)?.toDouble(),
+        beratG: (j['berat_g'] as num?)?.toDouble(),
+      );
 }
 
 class RecipeDetail {
@@ -88,7 +100,21 @@ class RecipeDetail {
     required this.category,
     required this.steps,
     required this.ingredients,
+    this.kalori,
+    this.proteinG,
+    this.lemakG,
+    this.karboG,
+    this.beratG,
   });
+
+  /// Perkiraan gizi TOTAL seluruh bahan resep (bukan per porsi). Null kalau tidak ada.
+  final double? kalori;
+  final double? proteinG;
+  final double? lemakG;
+  final double? karboG;
+
+  /// Total berat bahan (gram).
+  final double? beratG;
 
   final int id;
   final String title;
@@ -133,13 +159,13 @@ class UserProfile {
   }
 
   factory UserProfile.fromJson(Map<String, dynamic> j) => UserProfile(
-    fullName: j['full_name'] as String?,
-    gender: j['gender'] as String?,
-    age: (j['age'] as num?)?.toInt(),
-    weightKg: (j['weight_kg'] as num?)?.toDouble(),
-    heightCm: (j['height_cm'] as num?)?.toDouble(),
-    targetKkal: (j['target_kkal'] as num?)?.toInt(),
-  );
+        fullName: j['full_name'] as String?,
+        gender: j['gender'] as String?,
+        age: (j['age'] as num?)?.toInt(),
+        weightKg: (j['weight_kg'] as num?)?.toDouble(),
+        heightCm: (j['height_cm'] as num?)?.toDouble(),
+        targetKkal: (j['target_kkal'] as num?)?.toInt(),
+      );
 }
 
 class CookDoc {
@@ -176,8 +202,7 @@ class CatalogIngredient {
   /// Jumlah resep yang memakai bahan ini (dipakai untuk mengurutkan populer dulu).
   final int recipeCount;
 
-  factory CatalogIngredient.fromJson(Map<String, dynamic> j) =>
-      CatalogIngredient(
+  factory CatalogIngredient.fromJson(Map<String, dynamic> j) => CatalogIngredient(
         id: (j['id'] as num).toInt(),
         name: j['name'] as String,
         category: (j['category'] as String?) ?? 'Lainnya',

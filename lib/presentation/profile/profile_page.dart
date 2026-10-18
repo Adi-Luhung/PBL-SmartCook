@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/utils/text_utils.dart';
 import '../../core/widgets/app_button.dart';
 import '../../data/models.dart';
 import '../../providers/app_providers.dart';
@@ -470,8 +471,11 @@ class _SavedRecipesSection extends ConsumerWidget {
                         for (var i = 0; i < list.length; i++)
                           _SavedRecipeItem(
                             name: list[i].title,
-                            detail:
-                                '${list[i].totalSteps} langkah • ${list[i].totalIngredients} bahan',
+                            detail: [
+                              '${list[i].totalSteps} langkah',
+                              '${list[i].totalIngredients} bahan',
+                              kaloriPer100gLabel(list[i].kalori, list[i].beratG),
+                            ].whereType<String>().join(' • '),
                             showDivider: i < list.length - 1,
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(

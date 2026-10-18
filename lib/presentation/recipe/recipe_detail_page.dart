@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/text_utils.dart';
 import '../../core/widgets/app_button.dart';
+import '../../data/models.dart';
 import '../../providers/app_providers.dart';
 import '../common/actions.dart';
 
@@ -68,6 +69,10 @@ class RecipeDetailPage extends ConsumerWidget {
                 Text('Kategori: ${titleCase(r.category!)}',
                     style: AppTextStyles.bodyMuted),
               ],
+              if (r.kalori != null) ...[
+                const SizedBox(height: 16),
+                _NutritionCard(detail: r),
+              ],
               const SizedBox(height: 20),
               Text('Bahan (${r.ingredients.length})', style: AppTextStyles.h2),
               const SizedBox(height: 8),
@@ -115,6 +120,75 @@ class RecipeDetailPage extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+/// Kartu perkiraan gizi. Nilainya total seluruh bahan resep, bukan per porsi,
+/// jadi ditampilkan juga kepadatan per 100 g sebagai pembanding antar resep.
+class _NutritionCard extends StatelessWidget {
+  const _NutritionCard({required this.detail});
+
+  final RecipeDetail detail;
+
+  static String _n(double v) => v
+      .round()
+      .toString()
+      .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+
+  @override
+  Widget build(BuildContext context) {
+    final kalori = detail.kalori!;
+    final berat = detail.beratG;
+    final per100 = (berat != null && berat > 0) ? kalori / berat * 100 : null;
+
+    Widget tile(String value, String label) => Expanded(
+          child: Column(
+            children: [
+              Text(value,
+                  style: AppTextStyles.h2.copyWith(color: AppColors.primaryDark)),
+              const SizedBox(height: 2),
+              Text(label, style: AppTextStyles.caption),
+            ],
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Perkiraan Gizi', style: AppTextStyles.label),
+          const SizedBox(height: 2),
+          Text('Total seluruh bahan resep (bukan per porsi)',
+              style: AppTextStyles.caption),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              tile(_n(kalori), 'kkal'),
+              if (detail.proteinG != null) tile('${_n(detail.proteinG!)} g', 'protein'),
+              if (detail.lemakG != null) tile('${_n(detail.lemakG!)} g', 'lemak'),
+              if (detail.karboG != null) tile('${_n(detail.karboG!)} g', 'karbo'),
+            ],
+          ),
+          if (per100 != null || berat != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              [
+                if (per100 != null) '≈ ${_n(per100)} kkal per 100 g',
+                if (berat != null) 'berat bahan ≈ ${_n(berat)} g',
+              ].join(' • '),
+              style: AppTextStyles.caption,
+            ),
+          ],
+        ],
       ),
     );
   }

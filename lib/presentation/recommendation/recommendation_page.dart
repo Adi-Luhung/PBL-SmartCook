@@ -90,6 +90,7 @@ class RecommendationPage extends ConsumerWidget {
                           matchedWith: r.matchedNames.map(titleCase).join(', '),
                           overlayLabel: '${r.matched}/${r.total} bahan',
                           matchPercent: r.percent,
+                          caloriesLabel: kaloriPer100gLabel(r.kalori, r.beratG),
                           stepsCount: r.totalSteps,
                           bookmarked: bookmarks.contains(r.id),
                           onBookmarkTap: () =>

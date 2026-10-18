@@ -102,10 +102,12 @@ class _DesignSystemShowcaseState extends State<DesignSystemShowcase> {
             spacing: 8,
             runSpacing: 8,
             children: _selected
-                .map((name) => SelectedIngredientChip(
-                      label: name,
-                      onRemove: () => _toggle(name),
-                    ))
+                .map(
+                  (name) => SelectedIngredientChip(
+                    label: name,
+                    onRemove: () => _toggle(name),
+                  ),
+                )
                 .toList(),
           ),
           const SizedBox(height: 12),

@@ -18,6 +18,7 @@ class _HomeItem {
     required this.subtitle,
     required this.steps,
     required this.ingredientsLabel,
+    this.caloriesLabel,
   });
 
   final int id;
@@ -25,6 +26,7 @@ class _HomeItem {
   final String subtitle;
   final int steps;
   final String ingredientsLabel;
+  final String? caloriesLabel;
 }
 
 /// Tab Beranda — kalau pengguna sudah memilih bahan, tampilkan resep paling
@@ -54,6 +56,7 @@ class BerandaPage extends ConsumerWidget {
                     'Cocok untuk ${r.matchedNames.take(3).map(titleCase).join(', ')}',
                 steps: r.totalSteps,
                 ingredientsLabel: '${r.matched}/${r.total} bahan',
+                caloriesLabel: kaloriPer100gLabel(r.kalori, r.beratG),
               ))
           .toList();
     } else {
@@ -64,6 +67,7 @@ class BerandaPage extends ConsumerWidget {
                 subtitle: r.category == null ? '' : 'Kategori ${titleCase(r.category!)}',
                 steps: r.totalSteps,
                 ingredientsLabel: '${r.totalIngredients} bahan',
+                caloriesLabel: kaloriPer100gLabel(r.kalori, r.beratG),
               ))
           .toList();
     }
@@ -125,6 +129,7 @@ class BerandaPage extends ConsumerWidget {
                   subtitle: item.subtitle,
                   stepsCount: item.steps,
                   ingredientsLabel: item.ingredientsLabel,
+                  caloriesLabel: item.caloriesLabel,
                   bookmarked: bookmarks.contains(item.id),
                   onBookmarkTap: () => toggleBookmark(context, ref, item.id),
                   onTap: () => Navigator.of(context).push(

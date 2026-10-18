@@ -11,6 +11,7 @@ class HomeRecipeListItem extends StatelessWidget {
     required this.subtitle,
     required this.stepsCount,
     required this.ingredientsLabel,
+    this.caloriesLabel,
     this.bookmarked = false,
     this.onBookmarkTap,
     this.onTap,
@@ -20,6 +21,9 @@ class HomeRecipeListItem extends StatelessWidget {
   final String subtitle;
   final int stepsCount;
   final String ingredientsLabel;
+
+  /// Mis. "≈ 148 kkal/100 g"; null = tidak ditampilkan.
+  final String? caloriesLabel;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
   final VoidCallback? onTap;
@@ -81,17 +85,15 @@ class HomeRecipeListItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
-                  Row(
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Icon(Icons.format_list_numbered,
-                          size: 14, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Text('$stepsCount langkah', style: AppTextStyles.caption),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.kitchen_outlined,
-                          size: 14, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Text(ingredientsLabel, style: AppTextStyles.caption),
+                      _Meta(Icons.format_list_numbered, '$stepsCount langkah'),
+                      _Meta(Icons.kitchen_outlined, ingredientsLabel),
+                      if (caloriesLabel != null)
+                        _Meta(Icons.local_fire_department_outlined, caloriesLabel!),
                     ],
                   ),
                 ],
@@ -100,6 +102,25 @@ class HomeRecipeListItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _Meta extends StatelessWidget {
+  const _Meta(this.icon, this.text);
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.textMuted),
+        const SizedBox(width: 4),
+        Text(text, style: AppTextStyles.caption),
+      ],
     );
   }
 }

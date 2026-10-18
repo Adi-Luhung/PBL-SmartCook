@@ -389,12 +389,6 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
                     const SizedBox(height: 16),
                   ],
 
-                  // 5. Category Filter Chips (Horizontal)
-                  _buildCategoryFilterRow(
-                    allCategories.map((c) => c.title).toList(),
-                  ),
-                  const SizedBox(height: 16),
-
                   if (catalog.isLoading)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 32),
@@ -759,49 +753,6 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  /// Kategori Filter Chips Horizontal ("Semua Kategori", "Protein & Lauk", dsb.)
-  Widget _buildCategoryFilterRow(List<String> titles) {
-    final categories = ['Semua Kategori', ...titles];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: categories.map((cat) {
-          final isSelected = _activeCategoryFilter == cat;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: InkWell(
-              onTap: () => setState(() => _activeCategoryFilter = cat),
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF111827) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: isSelected
-                      ? null
-                      : Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: Text(
-                  cat,
-                  style: TextStyle(
-                    fontFamily: AppTextStyles.fontFamily,
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? Colors.white : const Color(0xFF374151),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

@@ -15,6 +15,7 @@ class RecommendationCard extends StatelessWidget {
     required this.matchPercent,
     required this.stepsCount,
     this.isDiet,
+    this.caloriesLabel,
     this.bookmarked = false,
     this.onBookmarkTap,
     this.onCookTap,
@@ -28,6 +29,9 @@ class RecommendationCard extends StatelessWidget {
   final int stepsCount;
   /// Null = tidak diketahui, badge disembunyikan.
   final bool? isDiet;
+
+  /// Mis. "≈ 148 kkal/100 g"; null = tidak ditampilkan.
+  final String? caloriesLabel;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
   final VoidCallback? onCookTap;
@@ -110,6 +114,20 @@ class RecommendationCard extends StatelessWidget {
                     const Icon(Icons.format_list_numbered, size: 14, color: AppColors.textMuted),
                     const SizedBox(width: 4),
                     Text('$stepsCount Langkah', style: AppTextStyles.caption),
+                    if (caloriesLabel != null) ...[
+                      const SizedBox(width: 10),
+                      const Icon(Icons.local_fire_department_outlined,
+                          size: 14, color: AppColors.textMuted),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          caloriesLabel!,
+                          style: AppTextStyles.caption,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                     const Spacer(),
                     TextButton(
                       onPressed: onCookTap,

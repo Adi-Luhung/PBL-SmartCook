@@ -7,23 +7,19 @@ import '../data/recipe_repository.dart';
 
 // ── Infrastruktur ──────────────────────────────────────────────────────────
 
-final supabaseProvider = Provider<SupabaseClient>(
-  (ref) => Supabase.instance.client,
-);
+final supabaseProvider =
+    Provider<SupabaseClient>((ref) => Supabase.instance.client);
 
 final recipeRepositoryProvider = Provider<RecipeRepository>(
-  (ref) => RecipeRepository(ref.watch(supabaseProvider)),
-);
+    (ref) => RecipeRepository(ref.watch(supabaseProvider)));
 
 final profileRepositoryProvider = Provider<ProfileRepository>(
-  (ref) => ProfileRepository(ref.watch(supabaseProvider)),
-);
+    (ref) => ProfileRepository(ref.watch(supabaseProvider)));
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 
 final authStateProvider = StreamProvider<AuthState>(
-  (ref) => ref.watch(supabaseProvider).auth.onAuthStateChange,
-);
+    (ref) => ref.watch(supabaseProvider).auth.onAuthStateChange);
 
 /// ID pengguna yang sedang login (null kalau belum login). Provider lain
 /// memantau ini, jadi datanya otomatis dimuat ulang saat ganti akun.
@@ -53,9 +49,8 @@ class SearchQueryNotifier extends Notifier<SearchQuery> {
   void clear() => state = const SearchQuery();
 }
 
-final searchQueryProvider = NotifierProvider<SearchQueryNotifier, SearchQuery>(
-  SearchQueryNotifier.new,
-);
+final searchQueryProvider =
+    NotifierProvider<SearchQueryNotifier, SearchQuery>(SearchQueryNotifier.new);
 
 final recommendationsProvider = FutureProvider<List<RecipeMatch>>((ref) async {
   final query = ref.watch(searchQueryProvider);
@@ -64,16 +59,13 @@ final recommendationsProvider = FutureProvider<List<RecipeMatch>>((ref) async {
 });
 
 final ingredientCatalogProvider = FutureProvider<List<CatalogIngredient>>(
-  (ref) => ref.watch(recipeRepositoryProvider).catalog(),
-);
+    (ref) => ref.watch(recipeRepositoryProvider).catalog());
 
 final featuredRecipesProvider = FutureProvider<List<RecipeSummary>>(
-  (ref) => ref.watch(recipeRepositoryProvider).featured(limit: 5),
-);
+    (ref) => ref.watch(recipeRepositoryProvider).featured(limit: 5));
 
 final recipeDetailProvider = FutureProvider.family<RecipeDetail, int>(
-  (ref, id) => ref.watch(recipeRepositoryProvider).detail(id),
-);
+    (ref, id) => ref.watch(recipeRepositoryProvider).detail(id));
 
 // ── Bookmark ───────────────────────────────────────────────────────────────
 
@@ -113,9 +105,8 @@ class BookmarkNotifier extends AsyncNotifier<Set<int>> {
   }
 }
 
-final bookmarkProvider = AsyncNotifierProvider<BookmarkNotifier, Set<int>>(
-  BookmarkNotifier.new,
-);
+final bookmarkProvider =
+    AsyncNotifierProvider<BookmarkNotifier, Set<int>>(BookmarkNotifier.new);
 
 final savedRecipesProvider = FutureProvider<List<RecipeSummary>>((ref) async {
   final uid = ref.watch(currentUserIdProvider);

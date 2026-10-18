@@ -8,14 +8,12 @@ class RecipeRepository {
 
   final SupabaseClient _db;
 
-  // Bahan
+  // ── Bahan ────────────────────────────────────────────────────────────────
 
   /// Cari bahan baku dari teks bebas (sinonim & typo ditangani di database
   /// lewat tabel `ingredient_aliases` + pg_trgm). Null jika tidak mirip apa pun.
-  Future<IngredientHit?> findIngredient(
-    String text, {
-    double minSim = 0.35,
-  }) async {
+  Future<IngredientHit?> findIngredient(String text,
+      {double minSim = 0.35}) async {
     final q = text.trim().toLowerCase();
     if (q.isEmpty) return null;
     final res = await _db.rpc('find_ingredient', params: {'q': q}) as List;
@@ -44,12 +42,10 @@ class RecipeRepository {
 
   /// Seluruh bahan baku beserta kategorinya, populer dulu.
   Future<List<CatalogIngredient>> catalog() async {
-    final res =
-        await _db
-                .from('ingredient_catalog')
-                .select('id,name,category,is_staple,recipe_count')
-                .order('recipe_count', ascending: false)
-            as List;
+    final res = await _db
+        .from('ingredient_catalog')
+        .select('id,name,category,is_staple,recipe_count')
+        .order('recipe_count', ascending: false) as List;
     return res
         .map((e) => CatalogIngredient.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -57,28 +53,24 @@ class RecipeRepository {
 
   // ── Resep ────────────────────────────────────────────────────────────────
 
-  Future<List<RecipeMatch>> matchRecipes(
-    List<int> ingredientIds, {
-    int limit = 20,
-  }) async {
+  Future<List<RecipeMatch>> matchRecipes(List<int> ingredientIds,
+      {int limit = 20}) async {
     if (ingredientIds.isEmpty) return [];
-    final res = await _db.rpc(
-      'match_recipes',
-      params: {'ingredient_ids': ingredientIds, 'lim': limit},
-    ) as List;
+    final res = await _db.rpc('match_recipes', params: {
+      'ingredient_ids': ingredientIds,
+      'lim': limit,
+    }) as List;
     return res
         .map((e) => RecipeMatch.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
   Future<List<RecipeSummary>> featured({int limit = 5}) async {
-    final res =
-        await _db
-                .from('recipes')
-                .select('id,title,category,total_steps,total_ingredients')
-                .order('id')
-                .limit(limit)
-            as List;
+    final res = await _db
+        .from('recipes')
+        .select('id,title,category,total_steps,total_ingredients,kalori,berat_g')
+        .order('id')
+        .limit(limit) as List;
     return res
         .map((e) => RecipeSummary.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -87,15 +79,16 @@ class RecipeRepository {
   Future<RecipeDetail> detail(int id) async {
     final r = await _db
         .from('recipes')
-        .select('id,title,steps,category,recipe_ingredients(ingredients(name))')
+        .select(
+            'id,title,steps,category,kalori,protein_g,lemak_g,karbo_g,berat_g,'
+            'recipe_ingredients(ingredients(name))')
         .eq('id', id)
         .single();
 
-    final ingredients =
-        ((r['recipe_ingredients'] as List?) ?? const [])
-            .map((e) => ((e as Map)['ingredients'] as Map)['name'] as String)
-            .toList()
-          ..sort();
+    final ingredients = ((r['recipe_ingredients'] as List?) ?? const [])
+        .map((e) => ((e as Map)['ingredients'] as Map)['name'] as String)
+        .toList()
+      ..sort();
 
     final steps = ((r['steps'] as String?) ?? '')
         .split('\n')
@@ -109,6 +102,11 @@ class RecipeRepository {
       category: r['category'] as String?,
       steps: steps,
       ingredients: ingredients,
+      kalori: (r['kalori'] as num?)?.toDouble(),
+      proteinG: (r['protein_g'] as num?)?.toDouble(),
+      lemakG: (r['lemak_g'] as num?)?.toDouble(),
+      karboG: (r['karbo_g'] as num?)?.toDouble(),
+      beratG: (r['berat_g'] as num?)?.toDouble(),
     );
   }
 
@@ -121,10 +119,9 @@ class RecipeRepository {
   }
 
   Future<void> addBookmark(int recipeId, String userId) async {
-    await _db.from('bookmarks').insert({
-      'user_id': userId,
-      'recipe_id': recipeId,
-    });
+    await _db
+        .from('bookmarks')
+        .insert({'user_id': userId, 'recipe_id': recipeId});
   }
 
   Future<void> removeBookmark(int recipeId, String userId) async {
@@ -136,14 +133,11 @@ class RecipeRepository {
   }
 
   Future<List<RecipeSummary>> bookmarkedRecipes() async {
-    final res =
-        await _db
-                .from('bookmarks')
-                .select(
-                  'created_at, recipes(id,title,category,total_steps,total_ingredients)',
-                )
-                .order('created_at', ascending: false)
-            as List;
+    final res = await _db
+        .from('bookmarks')
+        .select(
+            'created_at, recipes(id,title,category,total_steps,total_ingredients,kalori,berat_g)')
+        .order('created_at', ascending: false) as List;
     return res
         .map((e) => (e as Map)['recipes'])
         .whereType<Map<String, dynamic>>()
