@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_text_styles.dart';
 import '../auth/auth_page.dart';
+import '../recommendation/rating_hasil_masakan_page.dart';
 
 class RecipeReview {
   const RecipeReview({
@@ -141,7 +142,20 @@ class DetailResepPage extends StatelessWidget {
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => RatingHasilMasakanPage(
+                              title: title,
+                              isDiet: isDiet,
+                              calories: calories,
+                              portions: portions,
+                              imageAsset: imageAsset,
+                              imageUrl: imageUrl,
+                            ),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF084E38),
                         elevation: 0,
@@ -150,7 +164,7 @@ class DetailResepPage extends StatelessWidget {
                         ),
                       ),
                       child: const Text(
-                        'Selesai',
+                        'Selesai Memasak',
                         style: TextStyle(
                           fontFamily: AppTextStyles.fontFamily,
                           fontSize: 15,
