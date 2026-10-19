@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/services/bookmark_service.dart';
+import '../../core/services/cook_doc_service.dart';
 import '../../core/services/profile_photo_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -28,15 +29,22 @@ class ProfilePage extends StatelessWidget {
               children: [
                 const _ProfileHeader(),
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    const Expanded(
-                        child: _StatPill(label: 'Masakan Dibuat', value: '14')),
-                    const SizedBox(width: 12),
-                    Expanded(
-                        child: _StatPill(
-                            label: 'Resep Disimpan', value: '$savedCount')),
-                  ],
+                ListenableBuilder(
+                  listenable: CookDocService.instance,
+                  builder: (context, _) {
+                    final cookCount = 10 + CookDocService.instance.items.length;
+                    return Row(
+                      children: [
+                        Expanded(
+                            child: _StatPill(
+                                label: 'Masakan Dibuat', value: '$cookCount')),
+                        const SizedBox(width: 12),
+                        Expanded(
+                            child: _StatPill(
+                                label: 'Resep Disimpan', value: '$savedCount')),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
                 const _HealthCard(),
@@ -592,79 +600,89 @@ class _SavedRecipeItem extends StatelessWidget {
 
 // ─────────────────────────────────────────────────
 // Dokumentasi Masak
-// ─────────────────────────────────────────────────
 class _CookDocSection extends StatelessWidget {
   const _CookDocSection();
 
-  static const _photos = [
-    {'name': 'Nasi Telur Kecap', 'time': 'Kemarin siang'},
-    {'name': 'Tumis Kangkung', 'time': '2 hari lalu'},
-    {'name': 'Tempe Goreng', 'time': '24 Okt'},
-    {'name': 'Tahu Telur', 'time': '20 Okt'},
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Header
-        Row(
+    return ListenableBuilder(
+      listenable: CookDocService.instance,
+      builder: (context, _) {
+        final photos = CookDocService.instance.items;
+
+        return Column(
           children: [
-            const Icon(Icons.camera_alt_outlined,
-                color: AppColors.textPrimary, size: 18),
-            const SizedBox(width: 6),
-            const Expanded(
-              child: Text('Dokumentasi Masak', style: AppTextStyles.label),
-            ),
-            GestureDetector(
-              onTap: () {},
-              child: const Text(
-                'Galeri Pribadi',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+            Row(
+              children: [
+                const Icon(Icons.camera_alt_outlined,
+                    color: AppColors.textPrimary, size: 18),
+                const SizedBox(width: 6),
+                const Expanded(
+                  child: Text('Dokumentasi Masak', style: AppTextStyles.label),
                 ),
-              ),
+                GestureDetector(
+                  onTap: () {},
+                  child: const Text(
+                    'Galeri Pribadi',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 1.2,
+              children: photos
+                  .map((p) => _PhotoCard(
+                        name: p.name,
+                        time: p.time,
+                        photoPath: p.photoPath,
+                      ))
+                  .toList(),
             ),
           ],
-        ),
-        const SizedBox(height: 10),
-
-        // Grid 2x2
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.2,
-          children: _photos
-              .map((p) =>
-                  _PhotoCard(name: p['name']!, time: p['time']!))
-              .toList(),
-        ),
-      ],
+        );
+      },
     );
   }
 }
 
 class _PhotoCard extends StatelessWidget {
-  const _PhotoCard({required this.name, required this.time});
+  const _PhotoCard({
+    required this.name,
+    required this.time,
+    this.photoPath,
+  });
+
   final String name;
   final String time;
+  final String? photoPath;
 
   @override
   Widget build(BuildContext context) {
+    final hasPhoto = photoPath != null && File(photoPath!).existsSync();
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Foto placeholder abu-abu
-          Container(color: const Color(0xFFB0B8C1)),
-
-          // Gradient gelap di bawah
+          if (hasPhoto)
+            Image.file(
+              File(photoPath!),
+              fit: BoxFit.cover,
+            )
+          else
+            Container(color: const Color(0xFFB0B8C1)),
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -675,8 +693,6 @@ class _PhotoCard extends StatelessWidget {
               ),
             ),
           ),
-
-          // Label nama & waktu
           Positioned(
             left: 10,
             right: 10,
@@ -686,6 +702,8 @@ class _PhotoCard extends StatelessWidget {
               children: [
                 Text(
                   name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,

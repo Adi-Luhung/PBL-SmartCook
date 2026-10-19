@@ -4,6 +4,7 @@ import '../../core/services/bookmark_service.dart';
 import '../../core/services/ingredient_service.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../profile/profile_page.dart';
+import 'rating_hasil_masakan_page.dart';
 
 class RecipeReview {
   const RecipeReview({
@@ -1437,15 +1438,18 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content:
-                            Text('Selamat! Anda telah menyelesaikan resep ini.'),
-                        backgroundColor: Color(0xFF084E38),
-                        duration: Duration(seconds: 2),
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => RatingHasilMasakanPage(
+                          title: widget.title,
+                          isDiet: widget.isDiet,
+                          calories: widget.calories,
+                          portions: widget.portions,
+                          imageAsset: widget.imageAsset,
+                          imageUrl: widget.imageUrl,
+                        ),
                       ),
                     );
-                    Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF084E38),
