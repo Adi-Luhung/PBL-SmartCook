@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/services/ingredient_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import 'widgets/confirm_search_dialog.dart';
@@ -163,6 +164,8 @@ class _InputBahanPageState extends State<InputBahanPage> {
   @override
   void initState() {
     super.initState();
+    _selected.clear();
+    _selected.addAll(IngredientService.instance.selectedIngredients);
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.trim().toLowerCase();
@@ -183,18 +186,21 @@ class _InputBahanPageState extends State<InputBahanPage> {
       } else {
         _selected.add(name);
       }
+      IngredientService.instance.setSelectedIngredients(_selected.toList());
     });
   }
 
   void _removeIngredient(String name) {
     setState(() {
       _selected.remove(name);
+      IngredientService.instance.setSelectedIngredients(_selected.toList());
     });
   }
 
   void _clearAllSelected() {
     setState(() {
       _selected.clear();
+      IngredientService.instance.setSelectedIngredients(_selected.toList());
     });
   }
 

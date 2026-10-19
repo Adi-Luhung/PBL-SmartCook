@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/profile_avatar.dart';
 import '../profile/profile_page.dart';
+import 'detail_panduan_masak_page.dart';
 import 'widgets/recommendation_card.dart';
 
 class _RecipeData {
@@ -14,6 +15,16 @@ class _RecipeData {
     required this.imageAsset,
     this.isDiet = false,
     this.stepsCount = 3,
+    this.portions = 2,
+    this.rating = 4.8,
+    this.reviewCount = 142,
+    this.proteinGrams = 30,
+    this.carbsGrams = 14,
+    this.fatGrams = 12,
+    this.fiberGrams = 4,
+    this.sugarGrams = 3,
+    this.ingredientList = const [],
+    this.stepList = const [],
   });
 
   final String title;
@@ -23,6 +34,16 @@ class _RecipeData {
   final String imageAsset;
   final bool isDiet;
   final int stepsCount;
+  final int portions;
+  final double rating;
+  final int reviewCount;
+  final int proteinGrams;
+  final int carbsGrams;
+  final int fatGrams;
+  final int fiberGrams;
+  final int sugarGrams;
+  final List<String> ingredientList;
+  final List<Map<String, String>> stepList;
 }
 
 class RecommendationPage extends StatefulWidget {
@@ -58,6 +79,60 @@ class _RecommendationPageState extends State<RecommendationPage> {
 
   static const _recipes = [
     _RecipeData(
+      title: 'Ayam Tumis Kecap Bawang Daun',
+      matchedWith: 'Daging Ayam, Bawang Putih, Daun Bawang, Kecap Manis',
+      calories: 380,
+      matchPercent: 75,
+      imageAsset: 'assets/images/recipes/tumis_tahu_telur.jpg',
+      isDiet: false,
+      stepsCount: 5,
+      portions: 2,
+      rating: 4.8,
+      reviewCount: 142,
+      proteinGrams: 30,
+      carbsGrams: 14,
+      fatGrams: 12,
+      fiberGrams: 4,
+      sugarGrams: 3,
+      ingredientList: [
+        '250g Dada Ayam Fillet',
+        '3 siung Bawang Putih',
+        '2 batang Daun Bawang',
+        '1 buah Tomat Segar',
+        '2 sdm Kecap Manis Kental',
+        '1 sdm Kecap Asin Rendah Natrium',
+        '1 sdt Minyak Wijen Murni',
+        '1/2 sdt Merica & Garam Halus',
+      ],
+      stepList: [
+        {
+          'title': 'Persiapan & Marinasi',
+          'description':
+              'Potong dadu dada ayam, lumuri dengan 1 sdm kecap asin, merica, dan sesendok teh minyak wijen. Diamkan 5 menit agar serat daging empuk dan bumbu meresap sempurna.',
+        },
+        {
+          'title': 'Tumis Bumbu Aromatik',
+          'description':
+              'Panaskan 1 sdm minyak di wajan anti lengket. Masukkan bawang putih cincang, tumis dengan api sedang hingga harum kekuningan dan tidak gosong.',
+        },
+        {
+          'title': 'Pematangan Daging Ayam',
+          'description':
+              'Masukkan potongan ayam yang telah dimarinasi ke wajan. Aduk cepat hingga seluruh permukaan ayam berubah warna pucat keemasan dan matang gurih merata.',
+        },
+        {
+          'title': 'Karamelisasi Kecap & Daun Bawang',
+          'description':
+              'Tuangkan kecap manis, irisan daun bawang, dan potongan tomat. Aduk merata di atas api sedang hingga saus mengental mengkilap melapisi setiap potongan ayam.',
+        },
+        {
+          'title': 'Penyajian Hangat',
+          'description':
+              'Angkat dari wajan dan sajikan selagi hangat mengepul bersama nasi putih pulen hangat atau quinoa sehat favorit keluarga. Selamat menikmati santapan buatan sendiri!',
+        },
+      ],
+    ),
+    _RecipeData(
       title: 'Tahu Telur Bumbu Kecap Pedas',
       matchedWith: 'Tahu, Telur, Bawang, Cabai',
       calories: 320,
@@ -65,6 +140,41 @@ class _RecommendationPageState extends State<RecommendationPage> {
       imageAsset: 'assets/images/recipes/tahu_telur_kecap.jpg',
       isDiet: false,
       stepsCount: 3,
+      portions: 2,
+      rating: 4.7,
+      reviewCount: 98,
+      proteinGrams: 18,
+      carbsGrams: 16,
+      fatGrams: 14,
+      fiberGrams: 3,
+      sugarGrams: 4,
+      ingredientList: [
+        '300g Tahu Putih',
+        '2 butir Telur Ayam',
+        '3 siung Bawang Merah',
+        '2 siung Bawang Putih',
+        '5 buah Cabai Rawit Merah',
+        '2 batang Daun Bawang',
+        '3 sdm Kecap Manis',
+        '1/2 sdt Garam & Merica',
+      ],
+      stepList: [
+        {
+          'title': 'Goreng Tahu',
+          'description':
+              'Potong dadu tahu putih lalu goreng dalam minyak panas hingga berkulit keemasan, angkat dan tiriskan.',
+        },
+        {
+          'title': 'Tumis Bumbu',
+          'description':
+              'Tumis irisan bawang merah, bawang putih, dan cabai rawit hingga harum semerbak.',
+        },
+        {
+          'title': 'Karamelisasi Kecap',
+          'description':
+              'Masukkan tahu goreng, tuang kecap manis, bumbui garam dan merica, aduk rata hingga meresap sempurna.',
+        },
+      ],
     ),
     _RecipeData(
       title: 'Orak-Arik Telur Tahu Sehat',
@@ -74,6 +184,33 @@ class _RecommendationPageState extends State<RecommendationPage> {
       imageAsset: 'assets/images/recipes/orak_arik_telur_tahu.jpeg',
       isDiet: true,
       stepsCount: 2,
+      portions: 2,
+      rating: 4.6,
+      reviewCount: 84,
+      proteinGrams: 20,
+      carbsGrams: 8,
+      fatGrams: 10,
+      fiberGrams: 3,
+      sugarGrams: 2,
+      ingredientList: [
+        '200g Tahu Putih Sutra',
+        '2 butir Telur Ayam',
+        '2 siung Bawang Putih',
+        '1 batang Daun Bawang',
+        '1/2 sdt Merica & Garam',
+      ],
+      stepList: [
+        {
+          'title': 'Tumis Aromatik',
+          'description':
+              'Tumis bawang putih halus dengan 1 sendok teh minyak sehat hingga wangi lembut.',
+        },
+        {
+          'title': 'Orak-Arik Lembut',
+          'description':
+              'Masukkan hancuran tahu dan telur kocok, masak dengan api kecil sambil diaduk perlahan hingga matang empuk.',
+        },
+      ],
     ),
     _RecipeData(
       title: 'Sambal Goreng Tahu Telur',
@@ -83,6 +220,45 @@ class _RecommendationPageState extends State<RecommendationPage> {
       imageAsset: 'assets/images/recipes/sambal_goreng.jpg',
       isDiet: false,
       stepsCount: 4,
+      portions: 2,
+      rating: 4.8,
+      reviewCount: 110,
+      proteinGrams: 22,
+      carbsGrams: 12,
+      fatGrams: 15,
+      fiberGrams: 4,
+      sugarGrams: 3,
+      ingredientList: [
+        '250g Tahu Kuning',
+        '3 butir Telur Rebus',
+        '6 buah Cabai Merah',
+        '4 siung Bawang Merah',
+        '2 siung Bawang Putih',
+        '2 sdm Kecap Manis',
+        '1/2 sdt Garam & Gula',
+      ],
+      stepList: [
+        {
+          'title': 'Goreng Tahu & Telur',
+          'description':
+              'Goreng tahu dan telur rebus sebentar hingga berkulit tipis.',
+        },
+        {
+          'title': 'Tumis Bumbu Sambal',
+          'description':
+              'Haluskan cabai dan bawang, tumis hingga minyak kemerahan keluar dan matang.',
+        },
+        {
+          'title': 'Pematangan Sambal Goreng',
+          'description':
+              'Masukkan tahu dan telur ke dalam sambal, tambahkan kecap manis dan garam, masak hingga bumbu meresap.',
+        },
+        {
+          'title': 'Penyajian Hangat',
+          'description':
+              'Angkat dan sajikan bersama taburan bawang goreng selagi hangat.',
+        },
+      ],
     ),
   ];
 
@@ -93,7 +269,31 @@ class _RecommendationPageState extends State<RecommendationPage> {
     return _defaultIngredients;
   }
 
-  void _showCookingModal(String title) {
+  void _openRecipeDetail(_RecipeData recipe) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => DetailPanduanMasakPage(
+          title: recipe.title,
+          imageAsset: recipe.imageAsset,
+          calories: recipe.calories,
+          portions: recipe.portions,
+          isDiet: recipe.isDiet,
+          rating: recipe.rating,
+          reviewCount: recipe.reviewCount,
+          ingredientList: recipe.ingredientList,
+          stepList: recipe.stepList,
+          userIngredients: _activeIngredients,
+          proteinGrams: recipe.proteinGrams,
+          carbsGrams: recipe.carbsGrams,
+          fatGrams: recipe.fatGrams,
+          fiberGrams: recipe.fiberGrams,
+          sugarGrams: recipe.sugarGrams,
+        ),
+      ),
+    );
+  }
+
+  void _showCookingModal(_RecipeData recipe) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -149,7 +349,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                             ),
                           ),
                           Text(
-                            title,
+                            recipe.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -181,12 +381,7 @@ class _RecommendationPageState extends State<RecommendationPage> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(ctx).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Memulai panduan memasak untuk $title!'),
-                          backgroundColor: const Color(0xFF084E38),
-                        ),
-                      );
+                      _openRecipeDetail(recipe);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF084E38),
@@ -237,23 +432,26 @@ class _RecommendationPageState extends State<RecommendationPage> {
                     final r = _recipes[i];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: RecommendationCard(
-                        title: r.title,
-                        matchedWith: r.matchedWith,
-                        calories: r.calories,
-                        matchPercent: r.matchPercent,
-                        stepsCount: r.stepsCount,
-                        isDiet: r.isDiet,
-                        imageAsset: r.imageAsset,
-                        bookmarked: _bookmarked.contains(r.title),
-                        onBookmarkTap: () => setState(() {
-                          if (_bookmarked.contains(r.title)) {
-                            _bookmarked.remove(r.title);
-                          } else {
-                            _bookmarked.add(r.title);
-                          }
-                        }),
-                        onCookTap: () => _showCookingModal(r.title),
+                      child: GestureDetector(
+                        onTap: () => _openRecipeDetail(r),
+                        child: RecommendationCard(
+                          title: r.title,
+                          matchedWith: r.matchedWith,
+                          calories: r.calories,
+                          matchPercent: r.matchPercent,
+                          stepsCount: r.stepsCount,
+                          isDiet: r.isDiet,
+                          imageAsset: r.imageAsset,
+                          bookmarked: _bookmarked.contains(r.title),
+                          onBookmarkTap: () => setState(() {
+                            if (_bookmarked.contains(r.title)) {
+                              _bookmarked.remove(r.title);
+                            } else {
+                              _bookmarked.add(r.title);
+                            }
+                          }),
+                          onCookTap: () => _showCookingModal(r),
+                        ),
                       ),
                     );
                   }),
