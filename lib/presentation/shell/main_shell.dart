@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/services/ingredient_service.dart';
 import '../../core/widgets/app_bottom_nav.dart';
 import '../explore/eksplorasi_page.dart';
 import '../home/beranda_page.dart';
@@ -65,8 +66,8 @@ class _MainShellState extends State<MainShell> {
       if (ingredients.isNotEmpty) {
         _selectedIngredients =
             ingredients.map(_simplifyIngredientName).toSet().toList();
+        IngredientService.instance.setSelectedIngredients(ingredients);
       }
-      // Tetap di tab Input (index 2), beralih ke halaman hasil rekomendasi
       _showRecommendationInInput = true;
       _index = 2;
     });
