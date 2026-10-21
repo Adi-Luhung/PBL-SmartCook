@@ -1,14 +1,21 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../core/services/bookmark_service.dart';
+import '../../core/services/cook_doc_service.dart';
+import '../../core/services/ingredient_service.dart';
+import '../../core/services/profile_photo_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/utils/text_utils.dart';
 import '../../core/widgets/app_button.dart';
 import '../../data/models.dart';
 import '../../providers/app_providers.dart';
 import '../common/actions.dart';
-import '../recipe/recipe_detail_page.dart';
+import '../explore/detail_resep_page.dart';
+import '../recipe/recipe_detail_loader.dart';
 import 'edit_profile_page.dart';
 
 /// Tab Profil — data dari tabel `profiles`, `bookmarks`, dan `cook_docs`.
@@ -17,6 +24,9 @@ class ProfilePage extends ConsumerWidget {
 
   Future<void> _logout(WidgetRef ref) async {
     ref.read(searchQueryProvider.notifier).clear();
+    IngredientService.instance.setSelectedIngredients(const []);
+    BookmarkService.instance.clearServerBacked();
+    CookDocService.instance.clear();
     await ref.read(supabaseProvider).auth.signOut();
     // AuthGate otomatis kembali ke halaman login.
   }
@@ -25,139 +35,189 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider).value;
     final email = ref.watch(supabaseProvider).auth.currentUser?.email;
-    final savedCount = ref.watch(savedRecipesProvider).value?.length ?? 0;
-    final cookCount = ref.watch(cookDocsProvider).value?.length ?? 0;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          children: [
-            _ProfileHeader(profile: profile, email: email),
-            const SizedBox(height: 20),
-            Row(
+    return ListenableBuilder(
+      listenable: Listenable.merge([BookmarkService.instance, CookDocService.instance]),
+      builder: (context, _) {
+        final savedCount = BookmarkService.instance.savedRecipes.length;
+        final cookCount = CookDocService.instance.items.length;
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               children: [
-                Expanded(
-                    child: _StatPill(label: 'Masakan Dibuat', value: '$cookCount')),
-                const SizedBox(width: 12),
-                Expanded(
-                    child: _StatPill(label: 'Resep Disimpan', value: '$savedCount')),
+                _ProfileHeader(profile: profile, email: email),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                        child: _StatPill(
+                            label: 'Masakan Dibuat', value: '$cookCount')),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: _StatPill(
+                            label: 'Resep Disimpan', value: '$savedCount')),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _HealthCard(profile: profile),
+                const SizedBox(height: 20),
+                const _SavedRecipesSection(),
+                const SizedBox(height: 20),
+                const _CookDocSection(),
+                const SizedBox(height: 28),
+                AppButton(
+                  label: 'Ganti Akun',
+                  variant: AppButtonVariant.outline,
+                  icon: Icons.swap_horiz_rounded,
+                  onPressed: () => _logout(ref),
+                ),
+                const SizedBox(height: 12),
+                _LogoutButton(onPressed: () => _logout(ref)),
+                const SizedBox(height: 16),
               ],
             ),
-            const SizedBox(height: 20),
-            _HealthCard(profile: profile),
-            const SizedBox(height: 20),
-            const _SavedRecipesSection(),
-            const SizedBox(height: 20),
-            const _CookDocSection(),
-            const SizedBox(height: 28),
-            AppButton(
-              label: 'Ganti Akun',
-              variant: AppButtonVariant.outline,
-              icon: Icons.swap_horiz_rounded,
-              onPressed: () => _logout(ref),
-            ),
-            const SizedBox(height: 12),
-            _LogoutButton(onPressed: () => _logout(ref)),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────
-// Banner Sukses
-// ─────────────────────────────────────────────────
-class _SuccessBanner extends StatelessWidget {
-  const _SuccessBanner({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.success.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.check_circle, color: AppColors.success, size: 20),
-          const SizedBox(width: 10),
-          Text(
-            message,
-            style: const TextStyle(
-              color: AppColors.success,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-// ─────────────────────────────────────────────────
-// Header Profil
-// ─────────────────────────────────────────────────
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends StatefulWidget {
   const _ProfileHeader({required this.profile, required this.email});
 
   final UserProfile? profile;
   final String? email;
 
   @override
-  Widget build(BuildContext context) {
-    final name = (profile?.fullName?.trim().isNotEmpty ?? false)
-        ? profile!.fullName!
-        : (email?.split('@').first ?? 'Pengguna');
+  State<_ProfileHeader> createState() => _ProfileHeaderState();
+}
 
-    return Column(
-      children: [
-        Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            const CircleAvatar(
-              radius: 44,
-              backgroundImage: null,
-              backgroundColor: AppColors.border,
-              child: Icon(Icons.person, size: 40, color: AppColors.textMuted),
-            ),
-            Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const CircleAvatar(
-                radius: 10,
-                backgroundColor: AppColors.primary,
-                child: Icon(Icons.check, size: 12, color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(name, style: AppTextStyles.h2),
-        const SizedBox(height: 4),
-        Text(email ?? '', style: AppTextStyles.bodyMuted),
-        const SizedBox(height: 10),
-        if (profile?.gender != null || profile?.age != null)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (profile?.gender != null) _InfoPill(label: profile!.gender!),
-              if (profile?.gender != null && profile?.age != null)
-                const SizedBox(width: 10),
-              if (profile?.age != null) _InfoPill(label: '${profile!.age} Tahun'),
-            ],
+class _ProfileHeaderState extends State<_ProfileHeader> {
+  final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
+
+  String get _displayName {
+    final name = widget.profile?.fullName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    return widget.email?.split('@').first ?? 'Pengguna';
+  }
+
+  Future<void> _pickPhoto() async {
+    setState(() => _isLoading = true);
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        await ProfilePhotoService.instance.updatePhoto(image.path);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal memilih foto. Silakan coba lagi.'),
+            backgroundColor: Colors.red,
           ),
-      ],
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: ProfilePhotoService.instance,
+      builder: (context, _) {
+        final photoPath = ProfilePhotoService.instance.photoPath;
+        final hasPhoto = photoPath != null && File(photoPath).existsSync();
+        return Column(
+          children: [
+            GestureDetector(
+              onTap: _pickPhoto,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 44,
+                    backgroundColor: AppColors.border,
+                    backgroundImage:
+                        hasPhoto ? FileImage(File(photoPath)) : null,
+                    child: hasPhoto
+                        ? null
+                        : const Icon(
+                            Icons.person,
+                            size: 40,
+                            color: AppColors.textMuted,
+                          ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: _isLoading
+                        ? const CircleAvatar(
+                            radius: 10,
+                            backgroundColor: AppColors.border,
+                            child: SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          )
+                        : const CircleAvatar(
+                            radius: 10,
+                            backgroundColor: AppColors.primary,
+                            child: Icon(
+                              Icons.camera_alt,
+                              size: 10,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Ubah Foto',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(_displayName, style: AppTextStyles.h2),
+            const SizedBox(height: 4),
+            Text(widget.email ?? '', style: AppTextStyles.bodyMuted),
+            const SizedBox(height: 10),
+            if (widget.profile?.gender != null || widget.profile?.age != null)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (widget.profile?.gender != null)
+                    _InfoPill(label: widget.profile!.gender!),
+                  if (widget.profile?.gender != null && widget.profile?.age != null)
+                    const SizedBox(width: 10),
+                  if (widget.profile?.age != null)
+                    _InfoPill(label: '${widget.profile!.age} Tahun'),
+                ],
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -410,14 +470,21 @@ class _HealthCard extends StatelessWidget {
 // ─────────────────────────────────────────────────
 // Resep Disimpan
 // ─────────────────────────────────────────────────
-class _SavedRecipesSection extends ConsumerWidget {
+class _SavedRecipesSection extends StatelessWidget {
   const _SavedRecipesSection();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final saved = ref.watch(savedRecipesProvider);
-    final list = saved.value ?? const <RecipeSummary>[];
+  Widget build(BuildContext context) {
+    // Mendengarkan BookmarkService sendiri: widget ini const, jadi tidak ikut
+    // dibangun ulang saat induknya berubah.
+    return ListenableBuilder(
+      listenable: BookmarkService.instance,
+      builder: (context, _) => _buildContent(context),
+    );
+  }
 
+  Widget _buildContent(BuildContext context) {
+    final recipes = BookmarkService.instance.savedRecipes;
     return Column(
       children: [
         Row(
@@ -429,13 +496,14 @@ class _SavedRecipesSection extends ConsumerWidget {
               child: Text('Resep Disimpan', style: AppTextStyles.label),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                '${list.length} Resep',
+                '${recipes.length} Resep',
                 style: const TextStyle(
                   color: Color(0xFFD97706),
                   fontWeight: FontWeight.w600,
@@ -452,40 +520,30 @@ class _SavedRecipesSection extends ConsumerWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
-          child: saved.isLoading && list.isEmpty
+          child: recipes.isEmpty
               ? const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : list.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Text(
-                        'Belum ada resep yang disimpan. Ketuk ikon bookmark pada resep.',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.bodyMuted,
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      'Belum ada resep yang disimpan',
+                      style: TextStyle(
+                        fontFamily: AppTextStyles.fontFamily,
+                        color: AppColors.textMuted,
+                        fontSize: 13,
                       ),
-                    )
-                  : Column(
-                      children: [
-                        for (var i = 0; i < list.length; i++)
-                          _SavedRecipeItem(
-                            name: list[i].title,
-                            detail: [
-                              '${list[i].totalSteps} langkah',
-                              '${list[i].totalIngredients} bahan',
-                              kaloriPer100gLabel(list[i].kalori, list[i].beratG),
-                            ].whereType<String>().join(' • '),
-                            showDivider: i < list.length - 1,
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    RecipeDetailPage(recipeId: list[i].id),
-                              ),
-                            ),
-                          ),
-                      ],
                     ),
+                  ),
+                )
+              : Column(
+                  children: recipes
+                      .asMap()
+                      .entries
+                      .map((e) => _SavedRecipeItem(
+                            recipe: e.value,
+                            showDivider: e.key < recipes.length - 1,
+                          ))
+                      .toList(),
+                ),
         ),
       ],
     );
@@ -494,35 +552,74 @@ class _SavedRecipesSection extends ConsumerWidget {
 
 class _SavedRecipeItem extends StatelessWidget {
   const _SavedRecipeItem({
-    required this.name,
-    required this.detail,
+    required this.recipe,
     required this.showDivider,
-    required this.onTap,
   });
 
-  final String name;
-  final String detail;
+  final SavedRecipe recipe;
   final bool showDivider;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         InkWell(
-          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            final id = recipe.recipeId;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => id != null
+                    ? RecipeDetailLoader(recipeId: id)
+                    : DetailResepPage(
+                        title: recipe.name,
+                        imageUrl: recipe.imageUrl,
+                        imageAsset: recipe.imageAsset,
+                        calories: recipe.calories,
+                        portions: recipe.portions,
+                        isDiet: recipe.isDiet,
+                        ingredientList: recipe.ingredientList,
+                        stepList: recipe.stepList,
+                      ),
+              ),
+            );
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Container(
+                  child: SizedBox(
                     width: 56,
                     height: 56,
-                    color: AppColors.border,
-                    child: const Icon(Icons.fastfood_outlined,
-                        color: AppColors.textMuted),
+                    child: recipe.imageUrl != null
+                        ? Image.network(
+                            recipe.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                recipe.imageAsset != null
+                                    ? Image.asset(
+                                        recipe.imageAsset!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        color: const Color(0xFFE8EEFB),
+                                        child: const Icon(Icons.restaurant,
+                                            color: AppColors.textMuted),
+                                      ),
+                          )
+                        : (recipe.imageAsset != null
+                            ? Image.asset(
+                                recipe.imageAsset!,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                color: const Color(0xFFE8EEFB),
+                                child: const Icon(Icons.restaurant,
+                                    color: AppColors.textMuted),
+                              )),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -530,12 +627,17 @@ class _SavedRecipeItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name,
-                          style: AppTextStyles.label,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
+                      Text(recipe.name, style: AppTextStyles.label),
                       const SizedBox(height: 4),
-                      Text(detail, style: AppTextStyles.caption),
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time,
+                              size: 13, color: AppColors.textMuted),
+                          const SizedBox(width: 4),
+                          Text('${recipe.time} • ${recipe.ingredients}',
+                              style: AppTextStyles.caption),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -552,112 +654,114 @@ class _SavedRecipeItem extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────
-// Dokumentasi Masak (foto dari galeri)
+// Dokumentasi Masak
 // ─────────────────────────────────────────────────
-class _CookDocSection extends ConsumerWidget {
+class _CookDocSection extends StatelessWidget {
   const _CookDocSection();
 
-  static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
-  ];
-
-  static String _timeLabel(DateTime t) =>
-      '${t.day} ${_months[t.month - 1]} ${t.year}';
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final docs = ref.watch(cookDocsProvider);
-    final list = docs.value ?? const <CookDoc>[];
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: CookDocService.instance,
+      builder: (context, _) {
+        final docs = CookDocService.instance.items;
 
-    return Column(
-      children: [
-        Row(
+        return Column(
           children: [
-            const Icon(Icons.camera_alt_outlined,
-                color: AppColors.textPrimary, size: 18),
-            const SizedBox(width: 6),
-            const Expanded(
-              child: Text('Dokumentasi Masak', style: AppTextStyles.label),
-            ),
-            GestureDetector(
-              onTap: () => pickAndUploadCookDoc(context, ref),
-              child: const Text(
-                'Tambah Foto',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+            Row(
+              children: [
+                const Icon(Icons.camera_alt_outlined,
+                    color: AppColors.textPrimary, size: 18),
+                const SizedBox(width: 6),
+                const Expanded(
+                  child: Text('Dokumentasi Masak', style: AppTextStyles.label),
                 ),
+                GestureDetector(
+                  onTap: () => pickCookPhotoFromGallery(context),
+                  child: const Text(
+                    'Tambah Foto',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (docs.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Text(
+                  'Belum ada dokumentasi. Selesaikan sebuah resep atau ketuk "Tambah Foto" untuk memilih dari galeri.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMuted,
+                ),
+              )
+            else
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.2,
+                children: docs
+                    .map((p) => _PhotoCard(
+                          name: p.name,
+                          time: p.time,
+                          photoPath: p.photoPath,
+                          imageUrl: p.imageUrl,
+                        ))
+                    .toList(),
               ),
-            ),
           ],
-        ),
-        const SizedBox(height: 10),
-        if (docs.isLoading && list.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(20),
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (list.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Text(
-              'Belum ada foto. Ketuk "Tambah Foto" untuk memilih dari galeri.',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMuted,
-            ),
-          )
-        else
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.2,
-            children: [
-              for (final d in list)
-                _PhotoCard(
-                  name: d.recipeTitle ?? 'Masakanku',
-                  time: _timeLabel(d.createdAt),
-                  imageUrl: d.imageUrl,
-                ),
-            ],
-          ),
-      ],
+        );
+      },
     );
   }
 }
 
 class _PhotoCard extends StatelessWidget {
-  const _PhotoCard({required this.name, required this.time, this.imageUrl});
+  const _PhotoCard({
+    required this.name,
+    required this.time,
+    this.photoPath,
+    this.imageUrl,
+  });
+
   final String name;
   final String time;
+  final String? photoPath;
   final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
+    final hasLocal = photoPath != null && File(photoPath!).existsSync();
+    const placeholder = ColoredBox(color: Color(0xFFB0B8C1));
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (imageUrl == null)
-            Container(color: const Color(0xFFB0B8C1))
-          else
+          if (hasLocal)
+            Image.file(File(photoPath!), fit: BoxFit.cover)
+          else if (imageUrl != null)
             Image.network(
               imageUrl!,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  Container(color: const Color(0xFFB0B8C1)),
-            ),
+              errorBuilder: (_, __, ___) => placeholder,
+            )
+          else
+            placeholder,
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(

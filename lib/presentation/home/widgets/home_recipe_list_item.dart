@@ -9,9 +9,9 @@ class HomeRecipeListItem extends StatelessWidget {
     super.key,
     required this.title,
     required this.subtitle,
-    required this.stepsCount,
-    required this.ingredientsLabel,
-    this.caloriesLabel,
+    this.durationMinutes,
+    required this.calories,
+    this.imageAsset,
     this.bookmarked = false,
     this.onBookmarkTap,
     this.onTap,
@@ -19,11 +19,9 @@ class HomeRecipeListItem extends StatelessWidget {
 
   final String title;
   final String subtitle;
-  final int stepsCount;
-  final String ingredientsLabel;
-
-  /// Mis. "≈ 148 kkal/100 g"; null = tidak ditampilkan.
-  final String? caloriesLabel;
+  final int? durationMinutes;
+  final int calories;
+  final String? imageAsset;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
   final VoidCallback? onTap;
@@ -45,11 +43,17 @@ class HomeRecipeListItem extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: 64,
-                height: 64,
-                color: AppColors.border.withOpacity(0.5),
-                child: const Icon(Icons.image_outlined, color: AppColors.textMuted),
+              child: SizedBox(
+                width: 72,
+                height: 72,
+                child: imageAsset != null
+                    ? Image.asset(
+                        imageAsset!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildPlaceholder(),
+                      )
+                    : _buildPlaceholder(),
               ),
             ),
             const SizedBox(width: 12),
@@ -85,15 +89,23 @@ class HomeRecipeListItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+                  Row(
                     children: [
-                      _Meta(Icons.format_list_numbered, '$stepsCount langkah'),
-                      _Meta(Icons.kitchen_outlined, ingredientsLabel),
-                      if (caloriesLabel != null)
-                        _Meta(Icons.local_fire_department_outlined, caloriesLabel!),
+                      const Icon(
+                        Icons.local_fire_department_rounded,
+                        size: 15,
+                        color: Color(0xFFEA580C),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$calories kkal',
+                        style: const TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFEA580C),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -104,23 +116,12 @@ class HomeRecipeListItem extends StatelessWidget {
       ),
     );
   }
-}
 
-class _Meta extends StatelessWidget {
-  const _Meta(this.icon, this.text);
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppColors.textMuted),
-        const SizedBox(width: 4),
-        Text(text, style: AppTextStyles.caption),
-      ],
+  Widget _buildPlaceholder() {
+    return Container(
+      color: AppColors.border.withValues(alpha: 0.5),
+      child: const Icon(Icons.restaurant, color: AppColors.textMuted),
     );
   }
 }
+

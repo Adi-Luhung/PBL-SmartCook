@@ -20,10 +20,33 @@ class ProfileRepository {
     return r == null ? null : UserProfile.fromJson(r);
   }
 
-  Future<List<CookDoc>> listCookDocs({int limit = 24}) async {
+  /// Simpan/ubah profil (BMI dihitung dari berat & tinggi, target kalori dari TDEE + kategori BMI).
+  Future<void> saveProfile({
+    required String userId,
+    String? fullName,
+    required String gender,
+    required int age,
+    required double weightKg,
+    required double heightCm,
+    required int targetKkal,
+    required int activityLevel,
+  }) async {
+    await _db.from('profiles').upsert({
+      'user_id': userId,
+      if (fullName != null && fullName.isNotEmpty) 'full_name': fullName,
+      'gender': gender,
+      'age': age,
+      'weight_kg': weightKg,
+      'height_cm': heightCm,
+      'target_kkal': targetKkal,
+      'activity_level': activityLevel,
+    }, onConflict: 'user_id');
+  }
+
+  Future<List<CookDoc>> listCookDocs({int limit = 48}) async {
     final rows = await _db
         .from('cook_docs')
-        .select('id,image_path,created_at,recipes(title)')
+        .select('id,recipe_id,image_path,note,rating,tags,created_at,recipes(title)')
         .order('created_at', ascending: false)
         .limit(limit) as List;
 
@@ -40,34 +63,45 @@ class ProfileRepository {
       }
       return CookDoc(
         id: m['id'] as String,
+        recipeId: (m['recipe_id'] as num?)?.toInt(),
         recipeTitle: (m['recipes'] as Map?)?['title'] as String?,
         imageUrl: url,
+        rating: (m['rating'] as num?)?.toDouble(),
+        tags: ((m['tags'] as List?) ?? const []).map((e) => e.toString()).toList(),
+        note: (m['note'] as String?) ?? '',
         createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
       );
     }));
   }
 
-  /// Unggah foto (dari galeri) ke Storage lalu catat di tabel `cook_docs`.
-  Future<void> uploadCookDoc({
+  /// Simpan dokumentasi masak: unggah foto (kalau ada) ke Storage lalu catat di `cook_docs`.
+  Future<void> saveCookDoc({
     required String userId,
-    required XFile file,
     int? recipeId,
+    String? photoPath,
     String? note,
+    double? rating,
+    List<String> tags = const [],
   }) async {
-    final bytes = await file.readAsBytes();
-    final ext = _extension(file.name);
-    final path = '$userId/${DateTime.now().millisecondsSinceEpoch}.$ext';
-
-    await _db.storage.from(_bucket).uploadBinary(
-          path,
-          bytes,
-          fileOptions: FileOptions(contentType: _mime(ext)),
-        );
+    String? path;
+    if (photoPath != null && photoPath.isNotEmpty) {
+      final file = XFile(photoPath);
+      final bytes = await file.readAsBytes();
+      final ext = _extension(file.name);
+      path = '$userId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+      await _db.storage.from(_bucket).uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(contentType: _mime(ext)),
+          );
+    }
     await _db.from('cook_docs').insert({
       'user_id': userId,
       'recipe_id': recipeId,
       'image_path': path,
-      'note': note,
+      'note': (note == null || note.isEmpty) ? null : note,
+      'rating': rating,
+      'tags': tags,
     });
   }
 

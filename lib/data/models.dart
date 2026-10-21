@@ -44,6 +44,29 @@ class RecipeMatch {
 
   int get percent => (score * 100).round().clamp(0, 100);
 
+  RecipeMatch withNutrition({double? kalori, double? beratG}) => RecipeMatch(
+        id: id,
+        title: title,
+        category: category,
+        totalSteps: totalSteps,
+        matched: matched,
+        total: total,
+        score: score,
+        matchedNames: matchedNames,
+        kalori: kalori,
+        beratG: beratG,
+      );
+
+  RecipeSummary toSummary() => RecipeSummary(
+        id: id,
+        title: title,
+        category: category,
+        totalSteps: totalSteps,
+        totalIngredients: total,
+        kalori: kalori,
+        beratG: beratG,
+      );
+
   factory RecipeMatch.fromJson(Map<String, dynamic> j) => RecipeMatch(
         id: (j['id'] as num).toInt(),
         title: j['title'] as String,
@@ -105,7 +128,11 @@ class RecipeDetail {
     this.lemakG,
     this.karboG,
     this.beratG,
+    this.quantities = const {},
   });
+
+  /// Takaran per bahan (nama baku -> mis. "2 siung"); kosong bila belum ada datanya.
+  final Map<String, String> quantities;
 
   /// Perkiraan gizi TOTAL seluruh bahan resep (bukan per porsi). Null kalau tidak ada.
   final double? kalori;
@@ -133,6 +160,7 @@ class UserProfile {
     this.weightKg,
     this.heightCm,
     this.targetKkal,
+    this.activityLevel,
   });
 
   final String? fullName;
@@ -141,6 +169,9 @@ class UserProfile {
   final double? weightKg;
   final double? heightCm;
   final int? targetKkal;
+
+  /// Indeks tingkat aktivitas (0 = jarang bergerak ... 3 = sangat aktif).
+  final int? activityLevel;
 
   double? get bmi {
     final w = weightKg, h = heightCm;
@@ -165,6 +196,7 @@ class UserProfile {
         weightKg: (j['weight_kg'] as num?)?.toDouble(),
         heightCm: (j['height_cm'] as num?)?.toDouble(),
         targetKkal: (j['target_kkal'] as num?)?.toInt(),
+        activityLevel: (j['activity_level'] as num?)?.toInt(),
       );
 }
 
@@ -174,9 +206,17 @@ class CookDoc {
     required this.recipeTitle,
     required this.imageUrl,
     required this.createdAt,
+    this.recipeId,
+    this.rating,
+    this.tags = const [],
+    this.note = '',
   });
 
   final String id;
+  final int? recipeId;
+  final double? rating;
+  final List<String> tags;
+  final String note;
   final String? recipeTitle;
 
   /// Signed URL (berlaku sementara); null kalau gagal dibuat.

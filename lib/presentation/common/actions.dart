@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/services/bookmark_service.dart';
+import '../../core/services/cook_doc_service.dart';
 import '../../core/theme/app_colors.dart';
-import '../../providers/app_providers.dart';
+import '../../data/models.dart';
 
 void _snack(BuildContext context, String message, {bool error = false}) {
   ScaffoldMessenger.of(context)
@@ -14,26 +15,26 @@ void _snack(BuildContext context, String message, {bool error = false}) {
     ));
 }
 
-/// Simpan / hapus bookmark dan tampilkan pesan kalau gagal.
-Future<void> toggleBookmark(
-    BuildContext context, WidgetRef ref, int recipeId) async {
+/// Simpan / hapus bookmark resep database; tampilkan pesan kalau gagal.
+Future<void> toggleRecipeBookmark(
+    BuildContext context, RecipeSummary recipe) async {
+  final messenger = ScaffoldMessenger.of(context);
   try {
-    await ref.read(bookmarkProvider.notifier).toggle(recipeId);
+    await BookmarkService.instance.toggleRecipe(SavedRecipe.fromSummary(recipe));
   } catch (_) {
-    if (context.mounted) {
-      _snack(context, 'Gagal menyimpan resep. Coba lagi.', error: true);
-    }
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(
+        content: Text('Gagal menyimpan resep. Coba lagi.'),
+        backgroundColor: AppColors.danger,
+      ));
   }
 }
 
-/// Pilih foto dari galeri lalu unggah sebagai dokumentasi masak.
+/// Pilih foto dari galeri lalu simpan sebagai dokumentasi masak (jurnal dapur).
 /// Android 13+ memakai Photo Picker sistem (tanpa izin tambahan);
 /// iOS butuh NSPhotoLibraryUsageDescription di Info.plist.
-Future<void> pickAndUploadCookDoc(BuildContext context, WidgetRef ref,
-    {int? recipeId}) async {
-  final uid = ref.read(currentUserIdProvider);
-  if (uid == null) return;
-
+Future<void> pickCookPhotoFromGallery(BuildContext context) async {
   try {
     final file = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -44,15 +45,19 @@ Future<void> pickAndUploadCookDoc(BuildContext context, WidgetRef ref,
     if (!context.mounted) return;
 
     _snack(context, 'Mengunggah foto...');
-    await ref
-        .read(profileRepositoryProvider)
-        .uploadCookDoc(userId: uid, file: file, recipeId: recipeId);
-    ref.invalidate(cookDocsProvider);
-    if (context.mounted) _snack(context, 'Foto tersimpan di dokumentasi masak.');
-  } catch (_) {
-    if (context.mounted) {
+    final saved = await CookDocService.instance.addCookDoc(
+      CookDocItem(name: 'Masakanku', time: 'Hari ini', photoPath: file.path),
+    );
+    if (!context.mounted) return;
+    if (saved) {
+      _snack(context, 'Foto tersimpan di dokumentasi masak.');
+    } else {
       _snack(context, 'Gagal mengunggah foto. Periksa koneksi lalu coba lagi.',
           error: true);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      _snack(context, 'Gagal memilih foto.', error: true);
     }
   }
 }

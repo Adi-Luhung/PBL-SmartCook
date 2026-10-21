@@ -51,7 +51,7 @@ class RecipeCard extends StatelessWidget {
                   child: Container(
                     height: 120,
                     width: double.infinity,
-                    color: AppColors.border.withOpacity(0.5),
+                    color: AppColors.border.withValues(alpha: 0.5),
                     child: imageUrl == null
                         ? const Center(
                             child: Icon(Icons.image_outlined, color: AppColors.textMuted),

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/utils/nutrition.dart';
 import '../data/models.dart';
 import '../data/profile_repository.dart';
 import '../data/recipe_repository.dart';
@@ -32,13 +33,20 @@ final currentUserIdProvider = Provider<String?>((ref) {
 // ── Pencarian resep dari bahan ─────────────────────────────────────────────
 
 class SearchQuery {
-  const SearchQuery({this.names = const [], this.ids = const []});
+  const SearchQuery({
+    this.names = const [],
+    this.ids = const [],
+    this.canonical = const [],
+  });
 
   /// Nama bahan seperti yang dipilih pengguna (untuk ditampilkan).
   final List<String> names;
 
   /// ID bahan baku di database (untuk query).
   final List<int> ids;
+
+  /// Nama baku bahan di database (mis. "ayam", "cabai rawit").
+  final List<String> canonical;
 }
 
 class SearchQueryNotifier extends Notifier<SearchQuery> {
@@ -67,66 +75,15 @@ final featuredRecipesProvider = FutureProvider<List<RecipeSummary>>(
 final recipeDetailProvider = FutureProvider.family<RecipeDetail, int>(
     (ref, id) => ref.watch(recipeRepositoryProvider).detail(id));
 
-// ── Bookmark ───────────────────────────────────────────────────────────────
-
-class BookmarkNotifier extends AsyncNotifier<Set<int>> {
-  @override
-  Future<Set<int>> build() async {
-    final uid = ref.watch(currentUserIdProvider);
-    final repo = ref.watch(recipeRepositoryProvider);
-    if (uid == null) return <int>{};
-    return repo.bookmarkedIds();
-  }
-
-  /// Simpan / hapus bookmark. UI diperbarui dulu (optimistic), dikembalikan
-  /// kalau request gagal.
-  Future<void> toggle(int recipeId) async {
-    final uid = ref.read(currentUserIdProvider);
-    if (uid == null) return;
-    final repo = ref.read(recipeRepositoryProvider);
-
-    final before = Set<int>.of(state.value ?? <int>{});
-    final wasSaved = before.contains(recipeId);
-    final after = Set<int>.of(before);
-    wasSaved ? after.remove(recipeId) : after.add(recipeId);
-    state = AsyncData(after);
-
-    try {
-      if (wasSaved) {
-        await repo.removeBookmark(recipeId, uid);
-      } else {
-        await repo.addBookmark(recipeId, uid);
-      }
-      ref.invalidate(savedRecipesProvider);
-    } catch (_) {
-      state = AsyncData(before);
-      rethrow;
-    }
-  }
-}
-
-final bookmarkProvider =
-    AsyncNotifierProvider<BookmarkNotifier, Set<int>>(BookmarkNotifier.new);
-
-final savedRecipesProvider = FutureProvider<List<RecipeSummary>>((ref) async {
-  final uid = ref.watch(currentUserIdProvider);
-  final repo = ref.watch(recipeRepositoryProvider);
-  if (uid == null) return [];
-  return repo.bookmarkedRecipes();
-});
-
 // ── Profil & dokumentasi masak ─────────────────────────────────────────────
+
+/// Anggaran kalori per kali makan (target harian / 3), dasar label Diet/Non-Diet.
+final mealBudgetProvider = Provider<int>(
+    (ref) => mealBudgetFor(ref.watch(profileProvider).value?.targetKkal));
 
 final profileProvider = FutureProvider<UserProfile?>((ref) async {
   final uid = ref.watch(currentUserIdProvider);
   final repo = ref.watch(profileRepositoryProvider);
   if (uid == null) return null;
   return repo.fetchProfile(uid);
-});
-
-final cookDocsProvider = FutureProvider<List<CookDoc>>((ref) async {
-  final uid = ref.watch(currentUserIdProvider);
-  final repo = ref.watch(profileRepositoryProvider);
-  if (uid == null) return [];
-  return repo.listCookDocs();
 });
