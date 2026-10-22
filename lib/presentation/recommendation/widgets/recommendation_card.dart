@@ -14,7 +14,7 @@ class RecommendationCard extends StatelessWidget {
     required this.matchPercent,
     this.durationMinutes = 15,
     this.stepsCount = 3,
-    this.isDiet = false,
+    this.isDiet,
     this.imageAsset,
     this.bookmarked = false,
     this.onBookmarkTap,
@@ -29,7 +29,8 @@ class RecommendationCard extends StatelessWidget {
   final int matchPercent;
   final int durationMinutes;
   final int stepsCount;
-  final bool isDiet;
+  /// Null = tidak diketahui, badge Diet/Non-Diet disembunyikan.
+  final bool? isDiet;
   final String? imageAsset;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
@@ -37,6 +38,7 @@ class RecommendationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final diet = isDiet;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -110,11 +112,12 @@ class RecommendationCard extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (diet != null) ...[
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: isDiet ? const Color(0xFF059669) : const Color(0xFFD97706),
+                        color: diet ? const Color(0xFF059669) : const Color(0xFFD97706),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
@@ -128,13 +131,13 @@ class RecommendationCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isDiet ? Icons.eco_rounded : Icons.restaurant_menu_rounded,
+                            diet ? Icons.eco_rounded : Icons.restaurant_menu_rounded,
                             size: 13,
                             color: Colors.white,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isDiet ? 'Diet Sehat' : 'Non-Diet',
+                            diet ? 'Diet Sehat' : 'Non-Diet',
                             style: const TextStyle(
                               fontFamily: AppTextStyles.fontFamily,
                               color: Colors.white,
@@ -145,6 +148,7 @@ class RecommendationCard extends StatelessWidget {
                         ],
                       ),
                     ),
+                    ],
                   ],
                 ),
               ),

@@ -4,14 +4,7 @@ class IngredientService extends ChangeNotifier {
   IngredientService._();
   static final IngredientService instance = IngredientService._();
 
-  List<String> _selectedIngredients = [
-    'Daging Ayam',
-    'Bawang Putih',
-    'Daun Bawang',
-    'Tomat',
-    'Kecap Manis',
-    'Garam & Merica',
-  ];
+  List<String> _selectedIngredients = [];
 
   List<String> get selectedIngredients => List.unmodifiable(_selectedIngredients);
 

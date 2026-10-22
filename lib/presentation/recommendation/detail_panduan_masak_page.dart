@@ -44,8 +44,11 @@ class DetailPanduanMasakPage extends StatefulWidget {
     this.proteinGrams = 30,
     this.carbsGrams = 14,
     this.fatGrams = 12,
-    this.fiberGrams = 4,
-    this.sugarGrams = 3,
+    this.weightPerPortionGrams,
+    this.caloriesPer100g,
+    this.ingredientQuantities,
+    this.recipeId,
+    this.showReviews = true,
   });
 
   final String title;
@@ -63,8 +66,18 @@ class DetailPanduanMasakPage extends StatefulWidget {
   final int proteinGrams;
   final int carbsGrams;
   final int fatGrams;
-  final int fiberGrams;
-  final int sugarGrams;
+  /// Dari dataset: perkiraan berat bahan per porsi (g) dan kepadatan kalori (kkal / 100 g).
+  final int? weightPerPortionGrams;
+  final int? caloriesPer100g;
+
+  /// Takaran per bahan (kunci = teks di [ingredientList]); opsional.
+  final Map<String, String>? ingredientQuantities;
+
+  /// Resep database; null = resep lokal (data contoh).
+  final int? recipeId;
+
+  /// false = sembunyikan rating & ulasan (resep database belum punya ulasan).
+  final bool showReviews;
 
   @override
   State<DetailPanduanMasakPage> createState() => _DetailPanduanMasakPageState();
@@ -322,8 +335,11 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
   void _toggleBookmark() {
     BookmarkService.instance.toggleBookmark(
       SavedRecipe(
+        recipeId: widget.recipeId,
         name: widget.title,
-        time: '${_resolvedSteps.length * 5} Menit',
+        time: widget.recipeId != null
+            ? '${_resolvedSteps.length} Langkah'
+            : '${_resolvedSteps.length * 5} Menit',
         ingredients: '${_resolvedIngredients.length} Bahan',
         imageUrl: widget.imageUrl,
         imageAsset: widget.imageAsset,
@@ -506,6 +522,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (widget.showReviews) ...[
                     const SizedBox(height: 6),
                     Row(
                       children: [
@@ -526,6 +543,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                         ),
                       ],
                     ),
+                    ],
                   ],
                 ),
               ],
@@ -636,6 +654,8 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
   }
 
   Widget _buildNutritionCard() {
+    // Kecukupan protein harian (AKG dewasa ≈ 60 g).
+    final proteinAkg = (widget.proteinGrams / 60.0).clamp(0.0, 1.0);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -681,8 +701,8 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Text(
-                  'Per Porsi (150g)',
+                child: Text(
+                  'Per Porsi (${widget.weightPerPortionGrams ?? 150}g)',
                   style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 11,
@@ -720,7 +740,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                 ],
               ),
               Text(
-                '${widget.proteinGrams}g | 70% AKG',
+                '${widget.proteinGrams}g | ${(proteinAkg * 100).round()}% AKG',
                 style: const TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 13,
@@ -733,8 +753,8 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
-            child: const LinearProgressIndicator(
-              value: 0.70,
+            child: LinearProgressIndicator(
+              value: proteinAkg,
               minHeight: 6,
               backgroundColor: Color(0xFFE2E8F0),
               valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF084E38)),
@@ -747,9 +767,17 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
               const SizedBox(width: 8),
               _buildNutritionMiniBox('Lemak', '${widget.fatGrams}g'),
               const SizedBox(width: 8),
-              _buildNutritionMiniBox('Serat', '${widget.fiberGrams}g'),
+              _buildNutritionMiniBox(
+                  'Berat',
+                  widget.weightPerPortionGrams == null
+                      ? '-'
+                      : '${widget.weightPerPortionGrams}g'),
               const SizedBox(width: 8),
-              _buildNutritionMiniBox('Gula', '${widget.sugarGrams}g'),
+              _buildNutritionMiniBox(
+                  'Kkal/100g',
+                  widget.caloriesPer100g == null
+                      ? '-'
+                      : '${widget.caloriesPer100g}'),
             ],
           ),
         ],
@@ -971,7 +999,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
 
   Widget _buildIngredientItemRow(String ingredient) {
     final available = _isAvailable(ingredient);
-    final note = _getIngredientNote(ingredient);
+    final quantity = widget.ingredientQuantities?[ingredient];
+    final note = quantity ??
+        (widget.ingredientQuantities != null ? '' : _getIngredientNote(ingredient));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1007,16 +1037,21 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                     color: Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  note,
-                  style: const TextStyle(
-                    fontFamily: AppTextStyles.fontFamily,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF64748B),
+                if (note.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    note,
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 12,
+                      fontWeight:
+                          quantity != null ? FontWeight.w600 : FontWeight.w400,
+                      color: quantity != null
+                          ? const Color(0xFF084E38)
+                          : const Color(0xFF64748B),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -1086,6 +1121,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
         ...List.generate(steps.length, (index) {
           final step = steps[index];
           final tag = step['tag'];
+          final hasTitle = (step['title'] ?? '').trim().isNotEmpty;
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -1106,7 +1142,8 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment:
+                      hasTitle ? CrossAxisAlignment.center : CrossAxisAlignment.start,
                   children: [
                     Container(
                       width: 26,
@@ -1130,13 +1167,21 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        step['title'] ?? '',
-                        style: const TextStyle(
-                          fontFamily: AppTextStyles.fontFamily,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
-                        ),
+                        hasTitle ? step['title']! : (step['description'] ?? ''),
+                        style: hasTitle
+                            ? const TextStyle(
+                                fontFamily: AppTextStyles.fontFamily,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              )
+                            : const TextStyle(
+                                fontFamily: AppTextStyles.fontFamily,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF334155),
+                                height: 1.5,
+                              ),
                       ),
                     ),
                     if (tag != null)
@@ -1159,17 +1204,19 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  step['description'] ?? '',
-                  style: const TextStyle(
-                    fontFamily: AppTextStyles.fontFamily,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF475569),
-                    height: 1.45,
+                if (hasTitle) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    step['description'] ?? '',
+                    style: const TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF475569),
+                      height: 1.45,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           );
@@ -1389,7 +1436,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
   }
 
   Widget _buildBottomBar() {
-    final isBookmarked = BookmarkService.instance.isBookmarked(widget.title);
+    final isBookmarked = widget.recipeId != null
+        ? BookmarkService.instance.isRecipeBookmarked(widget.recipeId!)
+        : BookmarkService.instance.isBookmarked(widget.title);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -1447,6 +1496,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                           portions: widget.portions,
                           imageAsset: widget.imageAsset,
                           imageUrl: widget.imageUrl,
+                          recipeId: widget.recipeId,
                         ),
                       ),
                     );
@@ -1511,8 +1561,10 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                   _buildIngredientsSection(availableCount, unavailableCount),
                   const SizedBox(height: 24),
                   _buildStepsSection(),
-                  const SizedBox(height: 24),
-                  _buildReviewsSection(),
+                  if (widget.showReviews) ...[
+                    const SizedBox(height: 24),
+                    _buildReviewsSection(),
+                  ],
                 ],
               ),
             ),

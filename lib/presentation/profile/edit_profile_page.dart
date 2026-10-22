@@ -1,8 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/app_button.dart';
+import '../../providers/app_providers.dart';
 import 'widgets/profile_header.dart';
 
 // ─────────────────────────────────────────────────
@@ -46,21 +50,39 @@ const _activities = [
 // ─────────────────────────────────────────────────
 // Halaman Lengkapi Profil — StatefulWidget
 // ─────────────────────────────────────────────────
-class EditProfilePage extends StatefulWidget {
+class EditProfilePage extends ConsumerStatefulWidget {
   const EditProfilePage({super.key});
 
   @override
-  State<EditProfilePage> createState() => _EditProfilePageState();
+  ConsumerState<EditProfilePage> createState() => _EditProfilePageState();
 }
 
-class _EditProfilePageState extends State<EditProfilePage> {
+class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   // Form state
-  final _nameController = TextEditingController(text: 'Heisenberg');
+  final _nameController = TextEditingController();
   String _gender = 'Perempuan'; // 'Laki-laki' atau 'Perempuan'
   int _age = 24;
   int _height = 165; // cm
   int _weight = 58; // kg
-  int _activityIndex = 0;
+  int _activityIndex = 1;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Isi formulir dengan profil yang sudah tersimpan (kalau ada).
+    final p = ref.read(profileProvider).value;
+    if (p != null) {
+      _nameController.text = p.fullName ?? '';
+      if (p.gender != null) _gender = p.gender!;
+      if (p.age != null) _age = p.age!;
+      if (p.heightCm != null) _height = p.heightCm!.round();
+      if (p.weightKg != null) _weight = p.weightKg!.round();
+      if (p.activityLevel != null) {
+        _activityIndex = p.activityLevel!.clamp(0, _activities.length - 1);
+      }
+    }
+  }
 
   // ── Kalkulasi BMI ──────────────────────────────
   double get _bmi {
@@ -93,6 +115,62 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (_bmi < 25.0) return AppColors.bmiNormal;
     if (_bmi < 30.0) return AppColors.bmiOverweight;
     return AppColors.bmiObese;
+  }
+
+  // ── Target kalori harian: TDEE disesuaikan dengan kategori BMI ──
+  // Kurang: +300 (naik berat), Ideal: TDEE, Berlebih: −300, Obesitas: −500.
+  // Tidak pernah di bawah BMR.
+  int get _targetKkal {
+    final double adjusted;
+    if (_bmi < 18.5) {
+      adjusted = _tdee + 300;
+    } else if (_bmi < 25.0) {
+      adjusted = _tdee;
+    } else if (_bmi < 30.0) {
+      adjusted = _tdee - 300;
+    } else {
+      adjusted = _tdee - 500;
+    }
+    return max(adjusted, _bmr).round();
+  }
+
+  String get _targetNote {
+    if (_bmi < 18.5) return 'Surplus 300 kkal untuk menambah berat badan';
+    if (_bmi < 25.0) return 'Sama dengan kebutuhan harian (menjaga berat badan)';
+    if (_bmi < 30.0) return 'Defisit 300 kkal untuk menurunkan berat badan';
+    return 'Defisit 500 kkal untuk menurunkan berat badan';
+  }
+
+  Future<void> _save() async {
+    final uid = ref.read(currentUserIdProvider);
+    if (uid == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    setState(() => _saving = true);
+    try {
+      await ref.read(profileRepositoryProvider).saveProfile(
+            userId: uid,
+            fullName: _nameController.text.trim(),
+            gender: _gender,
+            age: _age,
+            weightKg: _weight.toDouble(),
+            heightCm: _height.toDouble(),
+            targetKkal: _targetKkal,
+            activityLevel: _activityIndex,
+          );
+      ref.invalidate(profileProvider);
+      messenger.showSnackBar(SnackBar(
+        content: Text(
+            'Profil tersimpan. Target kalori harian: ${_formatNumber(_targetKkal)} kkal'),
+      ));
+      navigator.pop();
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(
+        content: Text('Gagal menyimpan profil. Periksa koneksi lalu coba lagi.'),
+      ));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   // Posisi marker pada progress bar (0.0–1.0)
@@ -176,11 +254,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               backgroundColor: AppColors.profilePrimary,
               borderRadius: 14,
               height: 50,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profil berhasil disimpan!')),
-                );
-              },
+              loading: _saving,
+              onPressed: _saving ? null : _save,
             ),
             const SizedBox(height: 12),
 
@@ -633,6 +708,67 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     children: [
                       TextSpan(
                         text: '~$tdeeFormatted',
+                        style: AppTextStyles.h2.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' kkal',
+                        style: AppTextStyles.caption.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSlate,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Kotak Target Kalori Harian (menentukan label Diet / Non-Diet resep)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.flag_rounded, color: Color(0xFF059669), size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Target Kalori Harian',
+                        style: AppTextStyles.caption.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSlate,
+                        ),
+                      ),
+                      Text(
+                        _targetNote,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSlate,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '~${_formatNumber(_targetKkal)}',
                         style: AppTextStyles.h2.copyWith(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,

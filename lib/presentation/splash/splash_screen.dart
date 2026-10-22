@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_text_styles.dart';
-import '../auth/auth_page.dart';
+import '../auth/auth_gate.dart';
 
 class _LetterAnimation {
   const _LetterAnimation({
@@ -96,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, animation, secondaryAnimation) => const AuthPage(),
+        pageBuilder: (_, animation, secondaryAnimation) => const AuthGate(),
         transitionsBuilder: (_, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

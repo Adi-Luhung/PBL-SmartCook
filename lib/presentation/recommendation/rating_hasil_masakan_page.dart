@@ -17,6 +17,7 @@ class RatingHasilMasakanPage extends StatefulWidget {
     this.imageAsset,
     this.imageUrl,
     this.onBottomNavTap,
+    this.recipeId,
   });
 
   final String title;
@@ -26,6 +27,9 @@ class RatingHasilMasakanPage extends StatefulWidget {
   final String? imageAsset;
   final String? imageUrl;
   final ValueChanged<int>? onBottomNavTap;
+
+  /// Resep database yang dimasak (untuk dicatat di jurnal dapur); null = tidak terkait resep.
+  final int? recipeId;
 
   @override
   State<RatingHasilMasakanPage> createState() => _RatingHasilMasakanPageState();
@@ -183,7 +187,7 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
     );
   }
 
-  void _onFinish() {
+  Future<void> _onFinish() async {
     final now = DateTime.now();
     const months = [
       'Jan',
@@ -201,7 +205,9 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
     ];
     final shortDate = '${now.day} ${months[now.month - 1]}';
 
-    CookDocService.instance.addCookDoc(
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final saved = await CookDocService.instance.addCookDoc(
       CookDocItem(
         name: widget.title,
         time: 'Hari ini, $shortDate',
@@ -209,17 +215,20 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
         rating: _rating,
         tags: _selectedTags.toList(),
         notes: _notesController.text.trim(),
+        recipeId: widget.recipeId,
       ),
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Dokumentasi masak berhasil disimpan ke jurnal dapur!'),
-        backgroundColor: Color(0xFF084E38),
-        duration: Duration(seconds: 2),
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(saved
+            ? 'Dokumentasi masak berhasil disimpan ke jurnal dapur!'
+            : 'Tersimpan di perangkat, tetapi gagal diunggah. Periksa koneksi internetmu.'),
+        backgroundColor: saved ? const Color(0xFF084E38) : const Color(0xFFD97706),
+        duration: const Duration(seconds: 2),
       ),
     );
-    Navigator.of(context).pop();
+    navigator.pop();
   }
 
   Widget _buildTopBanner() {

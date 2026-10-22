@@ -1,53 +1,67 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/services/bookmark_service.dart';
 import '../../core/services/cook_doc_service.dart';
+import '../../core/services/ingredient_service.dart';
 import '../../core/services/profile_photo_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/app_button.dart';
+import '../../data/models.dart';
+import '../../providers/app_providers.dart';
+import '../common/actions.dart';
 import '../explore/detail_resep_page.dart';
+import '../recipe/recipe_detail_loader.dart';
 import 'edit_profile_page.dart';
 
-class ProfilePage extends StatelessWidget {
+/// Tab Profil — data dari tabel `profiles`, `bookmarks`, dan `cook_docs`.
+class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
+  Future<void> _logout(WidgetRef ref) async {
+    ref.read(searchQueryProvider.notifier).clear();
+    IngredientService.instance.setSelectedIngredients(const []);
+    BookmarkService.instance.clearServerBacked();
+    CookDocService.instance.clear();
+    await ref.read(supabaseProvider).auth.signOut();
+    // AuthGate otomatis kembali ke halaman login.
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileProvider).value;
+    final email = ref.watch(supabaseProvider).auth.currentUser?.email;
+
     return ListenableBuilder(
-      listenable: BookmarkService.instance,
+      listenable: Listenable.merge([BookmarkService.instance, CookDocService.instance]),
       builder: (context, _) {
         final savedCount = BookmarkService.instance.savedRecipes.length;
+        final cookCount = CookDocService.instance.items.length;
         return Scaffold(
           backgroundColor: AppColors.background,
           body: SafeArea(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               children: [
-                const _ProfileHeader(),
+                _ProfileHeader(profile: profile, email: email),
                 const SizedBox(height: 20),
-                ListenableBuilder(
-                  listenable: CookDocService.instance,
-                  builder: (context, _) {
-                    final cookCount = 10 + CookDocService.instance.items.length;
-                    return Row(
-                      children: [
-                        Expanded(
-                            child: _StatPill(
-                                label: 'Masakan Dibuat', value: '$cookCount')),
-                        const SizedBox(width: 12),
-                        Expanded(
-                            child: _StatPill(
-                                label: 'Resep Disimpan', value: '$savedCount')),
-                      ],
-                    );
-                  },
+                Row(
+                  children: [
+                    Expanded(
+                        child: _StatPill(
+                            label: 'Masakan Dibuat', value: '$cookCount')),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: _StatPill(
+                            label: 'Resep Disimpan', value: '$savedCount')),
+                  ],
                 ),
                 const SizedBox(height: 20),
-                const _HealthCard(),
+                _HealthCard(profile: profile),
                 const SizedBox(height: 20),
                 const _SavedRecipesSection(),
                 const SizedBox(height: 20),
@@ -57,10 +71,10 @@ class ProfilePage extends StatelessWidget {
                   label: 'Ganti Akun',
                   variant: AppButtonVariant.outline,
                   icon: Icons.swap_horiz_rounded,
-                  onPressed: () {},
+                  onPressed: () => _logout(ref),
                 ),
                 const SizedBox(height: 12),
-                const _LogoutButton(),
+                _LogoutButton(onPressed: () => _logout(ref)),
                 const SizedBox(height: 16),
               ],
             ),
@@ -71,9 +85,11 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-
 class _ProfileHeader extends StatefulWidget {
-  const _ProfileHeader();
+  const _ProfileHeader({required this.profile, required this.email});
+
+  final UserProfile? profile;
+  final String? email;
 
   @override
   State<_ProfileHeader> createState() => _ProfileHeaderState();
@@ -82,6 +98,12 @@ class _ProfileHeader extends StatefulWidget {
 class _ProfileHeaderState extends State<_ProfileHeader> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
+
+  String get _displayName {
+    final name = widget.profile?.fullName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    return widget.email?.split('@').first ?? 'Pengguna';
+  }
 
   Future<void> _pickPhoto() async {
     setState(() => _isLoading = true);
@@ -177,21 +199,22 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text('Heisenberg', style: AppTextStyles.h2),
+            Text(_displayName, style: AppTextStyles.h2),
             const SizedBox(height: 4),
-            const Text(
-              'heisenberg123@gmail.com',
-              style: AppTextStyles.bodyMuted,
-            ),
+            Text(widget.email ?? '', style: AppTextStyles.bodyMuted),
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _InfoPill(label: 'Perempuan'),
-                const SizedBox(width: 10),
-                _InfoPill(label: '24 Tahun'),
-              ],
-            ),
+            if (widget.profile?.gender != null || widget.profile?.age != null)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (widget.profile?.gender != null)
+                    _InfoPill(label: widget.profile!.gender!),
+                  if (widget.profile?.gender != null && widget.profile?.age != null)
+                    const SizedBox(width: 10),
+                  if (widget.profile?.age != null)
+                    _InfoPill(label: '${widget.profile!.age} Tahun'),
+                ],
+              ),
           ],
         );
       },
@@ -252,7 +275,9 @@ class _StatPill extends StatelessWidget {
 // Kesehatan & Kalori Card
 // ─────────────────────────────────────────────────
 class _HealthCard extends StatelessWidget {
-  const _HealthCard();
+  const _HealthCard({required this.profile});
+
+  final UserProfile? profile;
 
   @override
   Widget build(BuildContext context) {
@@ -282,9 +307,9 @@ class _HealthCard extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Kesehatan & Kalori', style: AppTextStyles.label),
-                    Text('58 kg • 165 cm', style: AppTextStyles.bodyMuted),
+                  children: [
+                    const Text('Kesehatan & Kalori', style: AppTextStyles.label),
+                    Text(_bodyLine(profile), style: AppTextStyles.bodyMuted),
                   ],
                 ),
               ),
@@ -334,26 +359,31 @@ class _HealthCard extends StatelessWidget {
                         textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
-                            '21.3',
+                            profile?.bmi == null ? '-' : profile!.bmi!.toStringAsFixed(1),
                             style: AppTextStyles.h1.copyWith(fontSize: 28),
                           ),
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'Ideal',
-                              style: TextStyle(
-                                color: AppColors.success,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
+                          if (profile?.bmiLabel != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: profile!.bmiLabel == 'Ideal'
+                                    ? const Color(0xFFDCFCE7)
+                                    : const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                profile!.bmiLabel!,
+                                style: TextStyle(
+                                  color: profile!.bmiLabel == 'Ideal'
+                                      ? AppColors.success
+                                      : const Color(0xFFD97706),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -399,7 +429,9 @@ class _HealthCard extends StatelessWidget {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: '1.829',
+                              text: profile?.targetKkal == null
+                                  ? '-'
+                                  : _formatKkal(profile!.targetKkal!),
                               style: AppTextStyles.h1.copyWith(fontSize: 28),
                             ),
                             const TextSpan(
@@ -422,6 +454,17 @@ class _HealthCard extends StatelessWidget {
       ),
     );
   }
+
+  /// 1829 -> "1.829"
+  static String _formatKkal(int n) => n.toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+
+  static String _bodyLine(UserProfile? p) {
+    if (p == null || p.weightKg == null || p.heightCm == null) {
+      return 'Data tubuh belum diisi';
+    }
+    return '${p.weightKg!.toStringAsFixed(0)} kg • ${p.heightCm!.toStringAsFixed(0)} cm';
+  }
 }
 
 // ─────────────────────────────────────────────────
@@ -432,6 +475,15 @@ class _SavedRecipesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Mendengarkan BookmarkService sendiri: widget ini const, jadi tidak ikut
+    // dibangun ulang saat induknya berubah.
+    return ListenableBuilder(
+      listenable: BookmarkService.instance,
+      builder: (context, _) => _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final recipes = BookmarkService.instance.savedRecipes;
     return Column(
       children: [
@@ -514,19 +566,22 @@ class _SavedRecipeItem extends StatelessWidget {
         InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
+            final id = recipe.recipeId;
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => DetailResepPage(
-                  title: recipe.name,
-                  imageUrl: recipe.imageUrl,
-                  imageAsset: recipe.imageAsset,
-                  calories: recipe.calories,
-                  portions: recipe.portions,
-                  isDiet: recipe.isDiet,
-                  ingredientList: recipe.ingredientList,
-                  stepList: recipe.stepList,
-                ),
+                builder: (context) => id != null
+                    ? RecipeDetailLoader(recipeId: id)
+                    : DetailResepPage(
+                        title: recipe.name,
+                        imageUrl: recipe.imageUrl,
+                        imageAsset: recipe.imageAsset,
+                        calories: recipe.calories,
+                        portions: recipe.portions,
+                        isDiet: recipe.isDiet,
+                        ingredientList: recipe.ingredientList,
+                        stepList: recipe.stepList,
+                      ),
               ),
             );
           },
@@ -600,6 +655,7 @@ class _SavedRecipeItem extends StatelessWidget {
 
 // ─────────────────────────────────────────────────
 // Dokumentasi Masak
+// ─────────────────────────────────────────────────
 class _CookDocSection extends StatelessWidget {
   const _CookDocSection();
 
@@ -608,7 +664,7 @@ class _CookDocSection extends StatelessWidget {
     return ListenableBuilder(
       listenable: CookDocService.instance,
       builder: (context, _) {
-        final photos = CookDocService.instance.items;
+        final docs = CookDocService.instance.items;
 
         return Column(
           children: [
@@ -621,9 +677,9 @@ class _CookDocSection extends StatelessWidget {
                   child: Text('Dokumentasi Masak', style: AppTextStyles.label),
                 ),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () => pickCookPhotoFromGallery(context),
                   child: const Text(
-                    'Galeri Pribadi',
+                    'Tambah Foto',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -634,21 +690,38 @@ class _CookDocSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.2,
-              children: photos
-                  .map((p) => _PhotoCard(
-                        name: p.name,
-                        time: p.time,
-                        photoPath: p.photoPath,
-                      ))
-                  .toList(),
-            ),
+            if (docs.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Text(
+                  'Belum ada dokumentasi. Selesaikan sebuah resep atau ketuk "Tambah Foto" untuk memilih dari galeri.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMuted,
+                ),
+              )
+            else
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.2,
+                children: docs
+                    .map((p) => _PhotoCard(
+                          name: p.name,
+                          time: p.time,
+                          photoPath: p.photoPath,
+                          imageUrl: p.imageUrl,
+                        ))
+                    .toList(),
+              ),
           ],
         );
       },
@@ -661,28 +734,34 @@ class _PhotoCard extends StatelessWidget {
     required this.name,
     required this.time,
     this.photoPath,
+    this.imageUrl,
   });
 
   final String name;
   final String time;
   final String? photoPath;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = photoPath != null && File(photoPath!).existsSync();
+    final hasLocal = photoPath != null && File(photoPath!).existsSync();
+    const placeholder = ColoredBox(color: Color(0xFFB0B8C1));
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (hasPhoto)
-            Image.file(
-              File(photoPath!),
+          if (hasLocal)
+            Image.file(File(photoPath!), fit: BoxFit.cover)
+          else if (imageUrl != null)
+            Image.network(
+              imageUrl!,
               fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => placeholder,
             )
           else
-            Container(color: const Color(0xFFB0B8C1)),
+            placeholder,
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -712,10 +791,7 @@ class _PhotoCard extends StatelessWidget {
                 ),
                 Text(
                   time,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                 ),
               ],
             ),
@@ -730,14 +806,16 @@ class _PhotoCard extends StatelessWidget {
 // Tombol Keluar (merah outline)
 // ─────────────────────────────────────────────────
 class _LogoutButton extends StatelessWidget {
-  const _LogoutButton();
+  const _LogoutButton({required this.onPressed});
+
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () {},
+        onPressed: onPressed,
         icon: const Icon(Icons.logout, color: AppColors.danger, size: 18),
         label: const Text('Keluar Akun'),
         style: OutlinedButton.styleFrom(

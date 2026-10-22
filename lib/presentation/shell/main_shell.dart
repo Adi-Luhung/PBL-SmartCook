@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/services/ingredient_service.dart';
+import '../../core/services/bookmark_service.dart';
+import '../../core/services/cook_doc_service.dart';
 import '../../core/widgets/app_bottom_nav.dart';
 import '../explore/eksplorasi_page.dart';
 import '../home/beranda_page.dart';
@@ -23,9 +24,24 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
   bool _showRecommendationInInput = false;
-  List<String> _selectedIngredients = ['Tahu', 'Telur', 'Bawang', 'Cabai'];
   String _exploreSearchKeyword = '';
   int _exploreSearchRequestId = 0;
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    // Hot reload (hanya saat debug): sinkron ulang data yang disimpan di singleton.
+    BookmarkService.instance.loadFromServer();
+    CookDocService.instance.loadFromServer();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Muat bookmark milik pengguna yang baru masuk dari Supabase.
+    BookmarkService.instance.loadFromServer();
+    CookDocService.instance.loadFromServer();
+  }
 
   void _goTo(int index) {
     setState(() {
@@ -53,21 +69,11 @@ class _MainShellState extends State<MainShell> {
     });
   }
 
-  String _simplifyIngredientName(String name) {
-    if (name.contains('Telur')) return 'Telur';
-    if (name.contains('Tahu')) return 'Tahu';
-    if (name.contains('Bawang')) return 'Bawang';
-    if (name.contains('Cabai')) return 'Cabai';
-    return name.split(' ').first;
-  }
-
+  /// Dipanggil setelah InputBahanPage selesai mencari di database
+  /// (hasilnya disimpan di searchQueryProvider).
   void _onSearchWithIngredients(List<String> ingredients) {
     setState(() {
-      if (ingredients.isNotEmpty) {
-        _selectedIngredients =
-            ingredients.map(_simplifyIngredientName).toSet().toList();
-        IngredientService.instance.setSelectedIngredients(ingredients);
-      }
+      // Tetap di tab Input (index 2), beralih ke halaman hasil rekomendasi
       _showRecommendationInInput = true;
       _index = 2;
     });
@@ -89,7 +95,6 @@ class _MainShellState extends State<MainShell> {
           _onBackToInputBahan();
         },
         child: RecommendationPage(
-          selectedIngredients: _selectedIngredients,
           onAddIngredients: _onBackToInputBahan,
           onProfileTap: () => _goTo(3),
         ),

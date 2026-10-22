@@ -1,4 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../data/models.dart';
+import '../../data/recipe_repository.dart';
+import '../utils/nutrition.dart';
 
 class SavedRecipe {
   const SavedRecipe({
@@ -12,7 +19,21 @@ class SavedRecipe {
     this.portions = 2,
     this.ingredientList = const [],
     this.stepList = const [],
+    this.recipeId,
   });
+
+  /// Resep dari database (disimpan juga di tabel `bookmarks`).
+  factory SavedRecipe.fromSummary(RecipeSummary s) => SavedRecipe(
+        recipeId: s.id,
+        name: s.title,
+        time: '${s.totalSteps} Langkah',
+        ingredients: '${s.totalIngredients} Bahan',
+        calories: caloriesPerPortion(s.kalori, s.beratG),
+        portions: estimatePortions(s.beratG),
+      );
+
+  /// ID resep di database; null = resep lokal (mis. data contoh di Eksplorasi).
+  final int? recipeId;
 
   final String name;
   final String time;
@@ -30,88 +51,9 @@ class BookmarkService extends ChangeNotifier {
   BookmarkService._();
   static final BookmarkService instance = BookmarkService._();
 
-  final List<SavedRecipe> _savedRecipes = [
-    const SavedRecipe(
-      name: 'Sup Telur Tomat',
-      time: '12 Menit',
-      ingredients: '3 Bahan',
-      imageUrl:
-          'https://images.unsplash.com/photo-1547928576-a4a33237cbc3?w=500&auto=format&fit=crop',
-      imageAsset: 'assets/images/recipes/sup_ayam_jahe.jpg',
-      calories: 210,
-      isDiet: true,
-      portions: 2,
-      ingredientList: [
-        '2 butir Telur Ayam',
-        '2 buah Tomat Segar',
-        '2 batang Daun Bawang',
-        '1 sdm Minyak Wijen',
-        '1/2 sdt Garam & Merica',
-      ],
-      stepList: [
-        {
-          'title': 'Persiapan Bahan',
-          'description':
-              'Kocok lepas telur dalam mangkuk. Iris tomat menjadi potongan baji dan iris halus daun bawang.',
-        },
-        {
-          'title': 'Menumis Tomat',
-          'description':
-              'Tumis irisan tomat dengan sedikit minyak hingga layu dan mengeluarkan sari asam manis alaminya.',
-        },
-        {
-          'title': 'Menuangkan Telur & Kuah',
-          'description':
-              'Tuangkan air secukupnya, masak hingga mendidih. Tuang kocokan telur secara perlahan sambil diaduk memutar.',
-        },
-        {
-          'title': 'Penyajian Hangat',
-          'description':
-              'Bumbui dengan garam dan minyak wijen, taburi daun bawang, sajikan selagi panas.',
-        },
-      ],
-    ),
-    const SavedRecipe(
-      name: 'Orak Arik Tahu Gurih',
-      time: '10 Menit',
-      ingredients: '4 Bahan',
-      imageUrl:
-          'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop',
-      imageAsset: 'assets/images/recipes/orak_arik_telur_tahu.jpeg',
-      calories: 240,
-      isDiet: true,
-      portions: 2,
-      ingredientList: [
-        '2 kotak Tahu Putih',
-        '2 butir Telur Ayam',
-        '2 siung Bawang Putih',
-        '1 batang Daun Bawang',
-        '1/2 sdt Kaldu Jamur & Merica',
-      ],
-      stepList: [
-        {
-          'title': 'Hancurkan Tahu',
-          'description':
-              'Hancurkan tahu putih menggunakan garpu hingga berbutir kasar namun tidak terlalu halus.',
-        },
-        {
-          'title': 'Tumis Bumbu',
-          'description':
-              'Tumis bawang putih cincang hingga harum keemasan di atas api sedang.',
-        },
-        {
-          'title': 'Orak-Arik Tahu & Telur',
-          'description':
-              'Masukkan tahu, aduk sebentar, lalu buat ruang di tengah wajan untuk telur. Orak-arik telur hingga matang menyatu.',
-        },
-        {
-          'title': 'Penyajian',
-          'description':
-              'Tambahkan daun bawang, kaldu jamur, dan lada. Aduk cepat lalu hidangkan hangat.',
-        },
-      ],
-    ),
-  ];
+  // Daftar awal kosong. Bookmark resep database dimuat dari Supabase lewat
+  // [loadFromServer]; resep lokal (data contoh) hanya hidup selama aplikasi jalan.
+  final List<SavedRecipe> _savedRecipes = [];
 
   List<SavedRecipe> get savedRecipes => List.unmodifiable(_savedRecipes);
 
@@ -120,7 +62,67 @@ class BookmarkService extends ChangeNotifier {
         .any((r) => r.name.toLowerCase() == title.toLowerCase());
   }
 
+  bool isRecipeBookmarked(int recipeId) =>
+      _savedRecipes.any((r) => r.recipeId == recipeId);
+
+  RecipeRepository get _repo => RecipeRepository(Supabase.instance.client);
+  String? get _userId => Supabase.instance.client.auth.currentUser?.id;
+
+  /// Muat bookmark pengguna dari Supabase (dipanggil setelah login).
+  Future<void> loadFromServer() async {
+    if (_userId == null) return;
+    try {
+      final rows = await _repo.bookmarkedRecipes();
+      _savedRecipes
+        ..removeWhere((r) => r.recipeId != null)
+        ..insertAll(0, rows.map(SavedRecipe.fromSummary));
+      notifyListeners();
+    } catch (_) {
+      // Biarkan daftar apa adanya; dimuat ulang saat aplikasi dibuka lagi.
+    }
+  }
+
+  /// Bersihkan bookmark milik akun yang baru keluar.
+  void clearServerBacked() {
+    _savedRecipes.removeWhere((r) => r.recipeId != null);
+    notifyListeners();
+  }
+
+  /// Simpan/hapus resep database. UI diperbarui dulu (optimistic) dan
+  /// dikembalikan kalau server gagal; error dilempar ke pemanggil.
+  Future<void> toggleRecipe(SavedRecipe recipe) async {
+    final id = recipe.recipeId;
+    final uid = _userId;
+    if (id == null || uid == null) return;
+
+    final index = _savedRecipes.indexWhere((r) => r.recipeId == id);
+    final wasSaved = index >= 0;
+    final removed = wasSaved ? _savedRecipes.removeAt(index) : null;
+    if (!wasSaved) _savedRecipes.insert(0, recipe);
+    notifyListeners();
+
+    try {
+      if (wasSaved) {
+        await _repo.removeBookmark(id, uid);
+      } else {
+        await _repo.addBookmark(id, uid);
+      }
+    } catch (_) {
+      if (wasSaved) {
+        _savedRecipes.insert(index.clamp(0, _savedRecipes.length), removed!);
+      } else {
+        _savedRecipes.removeWhere((r) => r.recipeId == id);
+      }
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   void toggleBookmark(SavedRecipe recipe) {
+    if (recipe.recipeId != null) {
+      unawaited(toggleRecipe(recipe).catchError((_) {}));
+      return;
+    }
     final index = _savedRecipes.indexWhere(
       (r) => r.name.toLowerCase() == recipe.name.toLowerCase(),
     );

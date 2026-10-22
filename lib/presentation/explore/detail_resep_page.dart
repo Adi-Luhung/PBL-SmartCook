@@ -34,6 +34,10 @@ class DetailResepPage extends StatelessWidget {
     this.reviews = const [],
     this.ingredientList = const [],
     this.stepList = const [],
+    this.showReviews = true,
+    this.extraContent,
+    this.recipeId,
+    this.ingredientQuantities,
   });
 
   final String title;
@@ -47,6 +51,18 @@ class DetailResepPage extends StatelessWidget {
   final List<RecipeReview> reviews;
   final List<String> ingredientList;
   final List<Map<String, String>> stepList;
+
+  /// false = sembunyikan bagian rating & ulasan (resep dari database belum punya ulasan).
+  final bool showReviews;
+
+  /// Resep database (untuk jurnal dapur); null = resep lokal.
+  final int? recipeId;
+
+  /// Takaran per bahan (kunci = teks di [ingredientList]); opsional.
+  final Map<String, String>? ingredientQuantities;
+
+  /// Konten tambahan di bawah langkah pembuatan (mis. kartu gizi, tombol dokumentasi).
+  final Widget? extraContent;
 
   @override
   Widget build(BuildContext context) {
@@ -135,8 +151,14 @@ class DetailResepPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   _buildStepsCard(),
-                  const SizedBox(height: 24),
-                  _buildReviewsSection(context),
+                  if (extraContent != null) ...[
+                    const SizedBox(height: 24),
+                    extraContent!,
+                  ],
+                  if (showReviews) ...[
+                    const SizedBox(height: 24),
+                    _buildReviewsSection(context),
+                  ],
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -152,6 +174,7 @@ class DetailResepPage extends StatelessWidget {
                               portions: portions,
                               imageAsset: imageAsset,
                               imageUrl: imageUrl,
+                              recipeId: recipeId,
                             ),
                           ),
                         );
@@ -400,6 +423,18 @@ class DetailResepPage extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (ingredientQuantities?[ingredient] != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          ingredientQuantities![ingredient]!,
+                          style: const TextStyle(
+                            fontFamily: AppTextStyles.fontFamily,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF084E38),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -459,24 +494,26 @@ class DetailResepPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            step['title'] ?? '',
-                            style: const TextStyle(
-                              fontFamily: AppTextStyles.fontFamily,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF0F172A),
+                          if ((step['title'] ?? '').isNotEmpty) ...[
+                            Text(
+                              step['title']!,
+                              style: const TextStyle(
+                                fontFamily: AppTextStyles.fontFamily,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
+                            const SizedBox(height: 4),
+                          ],
                           Text(
                             step['description'] ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: AppTextStyles.fontFamily,
-                              fontSize: 12,
+                              fontSize: (step['title'] ?? '').isEmpty ? 13 : 12,
                               fontWeight: FontWeight.w400,
-                              color: Color(0xFF475569),
-                              height: 1.45,
+                              color: const Color(0xFF475569),
+                              height: 1.5,
                             ),
                           ),
                         ],
