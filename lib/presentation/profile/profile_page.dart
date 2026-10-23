@@ -17,6 +17,7 @@ import '../common/actions.dart';
 import '../explore/detail_resep_page.dart';
 import '../recipe/recipe_detail_loader.dart';
 import 'edit_profile_page.dart';
+import 'photo_crop_page.dart';
 
 /// Tab Profil — data dari tabel `profiles`, `bookmarks`, dan `cook_docs`.
 class ProfilePage extends ConsumerWidget {
@@ -27,6 +28,7 @@ class ProfilePage extends ConsumerWidget {
     IngredientService.instance.setSelectedIngredients(const []);
     BookmarkService.instance.clearServerBacked();
     CookDocService.instance.clear();
+    ProfilePhotoService.instance.clearUser();
     await ref.read(supabaseProvider).auth.signOut();
     // AuthGate otomatis kembali ke halaman login.
   }
@@ -110,12 +112,20 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 90,
       );
-      if (image != null) {
-        await ProfilePhotoService.instance.updatePhoto(image.path);
+      if (image != null && mounted) {
+        // Buka halaman crop untuk atur posisi foto
+        final croppedPath = await Navigator.of(context).push<String?>(
+          MaterialPageRoute(
+            builder: (_) => PhotoCropPage(imagePath: image.path),
+          ),
+        );
+        if (croppedPath != null) {
+          await ProfilePhotoService.instance.updatePhoto(croppedPath);
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -131,6 +141,140 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
     }
   }
 
+  Future<void> _deletePhoto() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Hapus Foto Profil?',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+        content: const Text(
+          'Foto profil kamu akan dihapus secara permanen.',
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Hapus',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      setState(() => _isLoading = true);
+      try {
+        await ProfilePhotoService.instance.clearPhoto();
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showPhotoOptions() {
+    final hasPhoto = ProfilePhotoService.instance.photoPath != null &&
+        File(ProfilePhotoService.instance.photoPath!).existsSync();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                child: Text(
+                  'Foto Profil',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              const Divider(height: 16),
+              // Opsi: Unggah dari Galeri
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.photo_library_outlined,
+                      color: AppColors.primary, size: 22),
+                ),
+                title: const Text('Unggah dari Galeri',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0F172A))),
+                subtitle: const Text('Pilih foto dari galeri HP kamu',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _pickPhoto();
+                },
+              ),
+              // Opsi: Hapus Foto (hanya muncul jika ada foto)
+              if (hasPhoto) ...[
+                const Divider(height: 1, indent: 20, endIndent: 20),
+                ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        color: Colors.red, size: 22),
+                  ),
+                  title: const Text('Hapus Foto Profil',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red)),
+                  subtitle: const Text('Foto akan dihapus secara permanen',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _deletePhoto();
+                  },
+                ),
+              ],
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -141,7 +285,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
         return Column(
           children: [
             GestureDetector(
-              onTap: _pickPhoto,
+              onTap: _showPhotoOptions,
               child: Stack(
                 alignment: Alignment.bottomRight,
                 children: [
@@ -191,11 +335,14 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              'Ubah Foto',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
+            GestureDetector(
+              onTap: _showPhotoOptions,
+              child: Text(
+                hasPhoto ? 'Ubah Foto' : 'Tambah Foto',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(height: 12),
