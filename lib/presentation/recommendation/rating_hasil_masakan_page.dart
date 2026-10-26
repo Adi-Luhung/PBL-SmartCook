@@ -47,15 +47,13 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
     'Mudah Dibuat',
     'Porsi Sesuai',
   ];
-  final Set<String> _selectedTags = {
-    'Rasa Pas',
-    'Mudah Dibuat',
-    'Porsi Sesuai',
-  };
+  final Set<String> _selectedTags = {};
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedTags.clear();
     _notesController.addListener(_onNotesChanged);
   }
 
@@ -187,7 +185,218 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
     );
   }
 
+  void _showPhotoOptionsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.refresh_rounded,
+                    color: Color(0xFF084E38),
+                  ),
+                  title: const Text(
+                    'Ganti Foto',
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showImageSourceDialog();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Color(0xFFDC2626),
+                  ),
+                  title: const Text(
+                    'Hapus Foto',
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _confirmDeletePhoto();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmDeletePhoto() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Hapus Foto Hasil Masakan?',
+          style: TextStyle(
+            fontFamily: AppTextStyles.fontFamily,
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        content: const Text(
+          'Foto hasil masakan yang sudah dipilih akan dihapus.',
+          style: TextStyle(
+            fontFamily: AppTextStyles.fontFamily,
+            fontSize: 13,
+            color: Color(0xFF64748B),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text(
+              'Batal',
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFDC2626),
+            ),
+            child: const Text(
+              'Hapus',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      setState(() {
+        _selectedImageFile = null;
+      });
+    }
+  }
+
+  Future<void> _showAddTagDialog() async {
+    final textController = TextEditingController();
+    final newTag = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Tambah Tag Baru',
+          style: TextStyle(
+            fontFamily: AppTextStyles.fontFamily,
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Mis. Gurih Renyah, Praktis',
+            hintStyle: const TextStyle(
+              fontFamily: AppTextStyles.fontFamily,
+              fontSize: 13,
+              color: Color(0xFF94A3B8),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF084E38)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'Batal',
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final val = textController.text.trim();
+              if (val.isNotEmpty) {
+                Navigator.of(ctx).pop(val);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF084E38),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Tambah',
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (newTag != null && newTag.isNotEmpty && mounted) {
+      if (!_availableTags.contains(newTag)) {
+        setState(() {
+          _availableTags.add(newTag);
+        });
+      }
+    }
+  }
+
   Future<void> _onFinish() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
     final now = DateTime.now();
     const months = [
       'Jan',
@@ -207,28 +416,43 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
 
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    final saved = await CookDocService.instance.addCookDoc(
-      CookDocItem(
-        name: widget.title,
-        time: 'Hari ini, $shortDate',
-        photoPath: _selectedImageFile?.path,
-        rating: _rating,
-        tags: _selectedTags.toList(),
-        notes: _notesController.text.trim(),
-        recipeId: widget.recipeId,
-      ),
-    );
 
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(saved
-            ? 'Dokumentasi masak berhasil disimpan ke jurnal dapur!'
-            : 'Tersimpan di perangkat, tetapi gagal diunggah. Periksa koneksi internetmu.'),
-        backgroundColor: saved ? const Color(0xFF084E38) : const Color(0xFFD97706),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-    navigator.pop();
+    try {
+      final saved = await CookDocService.instance.addCookDoc(
+        CookDocItem(
+          name: widget.title,
+          time: 'Hari ini, $shortDate',
+          photoPath: _selectedImageFile?.path,
+          rating: _rating,
+          tags: _selectedTags.toList(),
+          notes: _notesController.text.trim(),
+          recipeId: widget.recipeId,
+        ),
+      );
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(saved
+              ? 'Dokumentasi masak berhasil disimpan ke jurnal dapur!'
+              : 'Tersimpan di perangkat, tetapi gagal diunggah. Periksa koneksi internetmu.'),
+          backgroundColor:
+              saved ? const Color(0xFF084E38) : const Color(0xFFD97706),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      navigator.pop(true);
+    } catch (_) {
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Gagal menyimpan dokumentasi masak. Coba lagi.'),
+            backgroundColor: Color(0xFFDC2626),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        setState(() => _isSaving = false);
+      }
+    }
   }
 
   Widget _buildTopBanner() {
@@ -399,7 +623,9 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
 
   Widget _buildPhotoSection() {
     return GestureDetector(
-      onTap: _showImageSourceDialog,
+      onTap: _selectedImageFile == null
+          ? _showImageSourceDialog
+          : _showPhotoOptionsBottomSheet,
       child: Container(
         height: 210,
         width: double.infinity,
@@ -422,119 +648,67 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
                 ),
               ),
             if (_selectedImageFile == null)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x0C000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.add_a_photo_outlined,
-                      size: 34,
-                      color: Color(0xFF084E38),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Foto Hasil Masakan',
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    SizedBox(height: 3),
-                    Text(
-                      'Ketuk untuk mengambil atau memilih foto',
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.camera_alt_outlined,
-                        size: 15, color: Colors.white),
-                    SizedBox(width: 6),
-                    Text(
-                      'Ketuk untuk Ganti Foto',
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x0A000000),
-                      blurRadius: 4,
-                      offset: Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.camera_alt_outlined,
-                      size: 13,
+              const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.add_a_photo_outlined,
+                    size: 38,
+                    color: Color(0xFF084E38),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Foto Hasil Masakan',
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
                       color: Color(0xFF0F172A),
                     ),
-                    SizedBox(width: 5),
-                    Text(
-                      'Foto Utama',
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                  ),
+                  SizedBox(height: 3),
+                  Text(
+                    'Ketuk untuk mengambil atau memilih foto',
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            if (_selectedImageFile != null)
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _confirmDeletePhoto,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDC2626),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.white,
+                        size: 20,
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -661,63 +835,100 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _availableTags.map((tag) {
-              final isSelected = _selectedTags.contains(tag);
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      _selectedTags.remove(tag);
-                    } else {
-                      _selectedTags.add(tag);
-                    }
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+            children: [
+              ..._availableTags.map((tag) {
+                final isSelected = _selectedTags.contains(tag);
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedTags.remove(tag);
+                      } else {
+                        _selectedTags.add(tag);
+                      }
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFFD1FAE5)
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isSelected) ...[
+                          const Icon(
+                            Icons.check,
+                            size: 13,
+                            color: Color(0xFF065F46),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        Text(
+                          tag,
+                          style: TextStyle(
+                            fontFamily: AppTextStyles.fontFamily,
+                            fontSize: 12,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? const Color(0xFF065F46)
+                                : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              GestureDetector(
+                onTap: _showAddTagDialog,
+                child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFFD1FAE5)
-                        : const Color(0xFFF8FAFC),
+                    color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFE2E8F0),
+                      color: const Color(0xFFCBD5E1),
                       width: 1,
                     ),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (isSelected) ...[
-                        const Icon(
-                          Icons.check,
-                          size: 13,
-                          color: Color(0xFF065F46),
-                        ),
-                        const SizedBox(width: 4),
-                      ],
+                      Icon(
+                        Icons.add,
+                        size: 13,
+                        color: Color(0xFF64748B),
+                      ),
+                      SizedBox(width: 4),
                       Text(
-                        tag,
+                        'Tambah Tag',
                         style: TextStyle(
                           fontFamily: AppTextStyles.fontFamily,
                           fontSize: 12,
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: isSelected
-                              ? const Color(0xFF065F46)
-                              : const Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF64748B),
                         ),
                       ),
                     ],
                   ),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
         ],
       ),
@@ -832,7 +1043,7 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
       width: double.infinity,
       height: 48,
       child: ElevatedButton(
-        onPressed: _onFinish,
+        onPressed: _isSaving ? null : _onFinish,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF084E38),
           elevation: 0,
@@ -840,15 +1051,24 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text(
-          'Selesai',
-          style: TextStyle(
-            fontFamily: AppTextStyles.fontFamily,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
+        child: _isSaving
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                'Selesai',
+                style: TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }

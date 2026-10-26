@@ -87,3 +87,7 @@ final profileProvider = FutureProvider<UserProfile?>((ref) async {
   if (uid == null) return null;
   return repo.fetchProfile(uid);
 });
+
+final recipeReviewsProvider = FutureProvider.family<List<RecipeReview>, int>(
+    (ref, recipeId) =>
+        ref.watch(recipeRepositoryProvider).fetchReviews(recipeId));
