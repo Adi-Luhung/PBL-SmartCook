@@ -250,3 +250,27 @@ class CatalogIngredient {
         recipeCount: (j['recipe_count'] as num?)?.toInt() ?? 0,
       );
 }
+
+class RecipeReview {
+  const RecipeReview({
+    required this.userName,
+    this.userAvatar,
+    required this.rating,
+    this.comment = '',
+    required this.date,
+    this.tags = const [],
+    this.photoUrl,
+    this.userId,
+    this.docId,
+  });
+
+  final String userName;
+  final String? userAvatar;
+  final double rating;
+  final String comment;
+  final String date;
+  final List<String> tags;
+  final String? photoUrl;
+  final String? userId;
+  final String? docId;
+}

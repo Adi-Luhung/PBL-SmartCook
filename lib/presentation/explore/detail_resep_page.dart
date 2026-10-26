@@ -1,26 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_text_styles.dart';
+import '../../data/models.dart';
+import '../../providers/app_providers.dart';
 import '../auth/auth_page.dart';
 import '../recommendation/rating_hasil_masakan_page.dart';
 
-class RecipeReview {
-  const RecipeReview({
-    required this.userName,
-    this.userAvatar,
-    required this.rating,
-    required this.comment,
-    required this.date,
-  });
+export '../../data/models.dart' show RecipeReview;
 
-  final String userName;
-  final String? userAvatar;
-  final double rating;
-  final String comment;
-  final String date;
-}
-
-class DetailResepPage extends StatelessWidget {
+class DetailResepPage extends ConsumerWidget {
   const DetailResepPage({
     super.key,
     required this.title,
@@ -65,7 +55,17 @@ class DetailResepPage extends StatelessWidget {
   final Widget? extraContent;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final effectiveReviews = (recipeId != null && reviews.isEmpty)
+        ? (ref.watch(recipeReviewsProvider(recipeId!)).value ?? reviews)
+        : reviews;
+    final effectiveRating = effectiveReviews.isNotEmpty
+        ? (effectiveReviews.map((e) => e.rating).reduce((a, b) => a + b) /
+            effectiveReviews.length)
+        : rating;
+    final effectiveCount =
+        effectiveReviews.isNotEmpty ? effectiveReviews.length : reviewCount;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -157,15 +157,21 @@ class DetailResepPage extends StatelessWidget {
                   ],
                   if (showReviews) ...[
                     const SizedBox(height: 24),
-                    _buildReviewsSection(context),
+                    _buildReviewsSection(
+                      context,
+                      ref,
+                      effectiveReviews,
+                      effectiveRating,
+                      effectiveCount,
+                    ),
                   ],
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
+                      onPressed: () async {
+                        final res = await Navigator.of(context).push<bool>(
                           MaterialPageRoute(
                             builder: (_) => RatingHasilMasakanPage(
                               title: title,
@@ -178,6 +184,9 @@ class DetailResepPage extends StatelessWidget {
                             ),
                           ),
                         );
+                        if (res == true && recipeId != null) {
+                          ref.invalidate(recipeReviewsProvider(recipeId!));
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF084E38),
@@ -535,7 +544,15 @@ class DetailResepPage extends StatelessWidget {
     );
   }
 
-  Widget _buildReviewsSection(BuildContext context) {
+  Widget _buildReviewsSection(
+    BuildContext context,
+    WidgetRef ref,
+    List<RecipeReview> effectiveReviews,
+    double effectiveRating,
+    int effectiveCount,
+  ) {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -584,7 +601,7 @@ class DetailResepPage extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '$rating ($reviewCount)',
+                    '${effectiveRating.toStringAsFixed(1)} ($effectiveCount)',
                     style: const TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 12,
@@ -619,7 +636,7 @@ class DetailResepPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    rating.toStringAsFixed(1),
+                    effectiveRating.toStringAsFixed(1),
                     style: const TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 32,
@@ -634,16 +651,18 @@ class DetailResepPage extends StatelessWidget {
                       Row(
                         children: List.generate(
                           5,
-                          (index) => const Icon(
-                            Icons.star_rounded,
+                          (index) => Icon(
+                            index < effectiveRating.round()
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
                             size: 18,
-                            color: Color(0xFFF59E0B),
+                            color: const Color(0xFFF59E0B),
                           ),
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Berdasarkan $reviewCount ulasan pengguna',
+                        'Berdasarkan $effectiveCount ulasan pengguna',
                         style: const TextStyle(
                           fontFamily: AppTextStyles.fontFamily,
                           fontSize: 12,
@@ -655,19 +674,34 @@ class DetailResepPage extends StatelessWidget {
                   ),
                 ],
               ),
-              if (reviews.isNotEmpty) ...[
+              if (effectiveReviews.isEmpty) ...[
+                const SizedBox(height: 14),
+                const Text(
+                  'Belum ada ulasan untuk resep ini.',
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ] else ...[
                 const SizedBox(height: 16),
                 const Divider(color: Color(0xFFF1F5F9), height: 1),
                 const SizedBox(height: 16),
-                ...List.generate(reviews.length, (index) {
-                  final review = reviews[index];
+                ...List.generate(effectiveReviews.length, (index) {
+                  final review = effectiveReviews[index];
                   final initial = review.userName.isNotEmpty
                       ? review.userName[0].toUpperCase()
                       : 'U';
+                  final isOwner = review.userId != null &&
+                      currentUserId != null &&
+                      review.userId == currentUserId &&
+                      review.docId != null;
 
                   return Padding(
                     padding: EdgeInsets.only(
-                        bottom: index < reviews.length - 1 ? 16 : 0),
+                        bottom: index < effectiveReviews.length - 1 ? 16 : 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -731,19 +765,118 @@ class DetailResepPage extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            if (isOwner) ...[
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (dialogCtx) => AlertDialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(16),
+                                      ),
+                                      backgroundColor: Colors.white,
+                                      title: const Text(
+                                        'Hapus Ulasan?',
+                                        style: TextStyle(
+                                          fontFamily: AppTextStyles.fontFamily,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      content: const Text(
+                                        'Ulasan dan rating kamu akan dihapus dari resep ini.',
+                                        style: TextStyle(
+                                          fontFamily: AppTextStyles.fontFamily,
+                                          fontSize: 13,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dialogCtx, false),
+                                          child: const Text('Batal'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(dialogCtx, true),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor:
+                                                const Color(0xFFDC2626),
+                                          ),
+                                          child: const Text(
+                                            'Hapus',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w700),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true && recipeId != null) {
+                                    await ref
+                                        .read(recipeRepositoryProvider)
+                                        .deleteReview(
+                                            review.docId!, currentUserId);
+                                    ref.invalidate(
+                                        recipeReviewsProvider(recipeId!));
+                                  }
+                                },
+                                child: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 16,
+                                  color: Color(0xFFDC2626),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          review.comment,
-                          style: const TextStyle(
-                            fontFamily: AppTextStyles.fontFamily,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFF334155),
-                            height: 1.4,
+                        if (review.tags.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: review.tags
+                                .map(
+                                  (tag) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD1FAE5),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      tag,
+                                      style: const TextStyle(
+                                        fontFamily: AppTextStyles.fontFamily,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF065F46),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
                           ),
-                        ),
+                        ],
+                        if (review.photoUrl != null &&
+                            review.photoUrl!.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(
+                              review.photoUrl!,
+                              height: 120,
+                              width: 160,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const SizedBox.shrink(),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   );
@@ -756,7 +889,29 @@ class DetailResepPage extends StatelessWidget {
                 width: double.infinity,
                 height: 42,
                 child: OutlinedButton.icon(
-                  onPressed: () => _showLoginPrompt(context),
+                  onPressed: () async {
+                    final user = Supabase.instance.client.auth.currentUser;
+                    if (user == null) {
+                      _showLoginPrompt(context);
+                      return;
+                    }
+                    final res = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(
+                        builder: (_) => RatingHasilMasakanPage(
+                          title: title,
+                          isDiet: isDiet,
+                          calories: calories,
+                          portions: portions,
+                          imageAsset: imageAsset,
+                          imageUrl: imageUrl,
+                          recipeId: recipeId,
+                        ),
+                      ),
+                    );
+                    if (res == true && recipeId != null) {
+                      ref.invalidate(recipeReviewsProvider(recipeId!));
+                    }
+                  },
                   icon: const Icon(
                     Icons.rate_review_outlined,
                     size: 16,

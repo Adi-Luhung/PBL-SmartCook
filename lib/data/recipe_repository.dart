@@ -223,4 +223,97 @@ class RecipeRepository {
         .map(RecipeSummary.fromJson)
         .toList();
   }
+
+  static const _reviewMonths = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+  ];
+
+  static String _formatReviewDate(DateTime t) {
+    final now = DateTime.now();
+    final days = DateTime(now.year, now.month, now.day)
+        .difference(DateTime(t.year, t.month, t.day))
+        .inDays;
+    if (days <= 0) return 'Hari ini';
+    if (days == 1) return 'Kemarin';
+    if (days < 7) return '$days hari lalu';
+    return '${t.day} ${_reviewMonths[t.month - 1]} ${t.year}';
+  }
+
+  Future<List<RecipeReview>> fetchReviews(int recipeId) async {
+    final List rows;
+    try {
+      rows = await _db
+          .from('cook_docs')
+          .select('id,user_id,rating,tags,image_path,created_at')
+          .eq('recipe_id', recipeId)
+          .not('rating', 'is', null)
+          .order('created_at', ascending: false)
+          .limit(50) as List;
+    } catch (_) {
+      return [];
+    }
+
+    final userIds = rows
+        .map((e) => (e as Map<String, dynamic>)['user_id'] as String?)
+        .whereType<String>()
+        .toSet()
+        .toList();
+
+    final names = <String, String>{};
+    if (userIds.isNotEmpty) {
+      try {
+        final profs = await _db
+            .from('profiles')
+            .select('user_id,full_name')
+            .inFilter('user_id', userIds) as List;
+        for (final p in profs) {
+          final m = p as Map<String, dynamic>;
+          final uid = m['user_id'] as String;
+          final name = m['full_name'] as String?;
+          if (name != null && name.trim().isNotEmpty) {
+            names[uid] = name.trim();
+          }
+        }
+      } catch (_) {}
+    }
+
+    return Future.wait(rows.map((e) async {
+      final m = e as Map<String, dynamic>;
+      final path = m['image_path'] as String?;
+      String? url;
+      if (path != null && path.isNotEmpty) {
+        try {
+          url = await _db.storage.from('cook-docs').createSignedUrl(path, 3600);
+        } catch (_) {}
+      }
+      final uid = m['user_id'] as String?;
+      final rawTags = m['tags'];
+      final tags = (rawTags is List)
+          ? rawTags.map((t) => t.toString()).toList()
+          : <String>[];
+      final date = m['created_at'] != null
+          ? DateTime.tryParse(m['created_at'].toString())?.toLocal()
+          : null;
+
+      return RecipeReview(
+        userName: (uid != null ? names[uid] : null) ?? 'Pengguna SmartCook',
+        rating: (m['rating'] as num?)?.toDouble() ?? 5.0,
+        comment: '',
+        date: date != null ? _formatReviewDate(date) : 'Hari ini',
+        tags: tags,
+        photoUrl: url,
+        userId: uid,
+        docId: m['id']?.toString(),
+      );
+    }));
+  }
+
+  Future<void> deleteReview(String docId, String userId) async {
+    await _db
+        .from('cook_docs')
+        .delete()
+        .eq('id', docId)
+        .eq('user_id', userId);
+  }
 }

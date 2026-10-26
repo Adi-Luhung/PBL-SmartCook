@@ -48,12 +48,21 @@ class RecipeDetailLoader extends ConsumerWidget {
       ),
       data: (r) {
         final calories = caloriesPerPortion(r.kalori, r.beratG);
+        final reviews =
+            ref.watch(recipeReviewsProvider(recipeId)).value ?? const [];
+        final rating = reviews.isNotEmpty
+            ? (reviews.map((e) => e.rating).reduce((a, b) => a + b) /
+                reviews.length)
+            : 5.0;
         return DetailResepPage(
           title: r.title,
           calories: calories,
           portions: estimatePortions(r.beratG),
           isDiet: isDietPortion(calories, budget) ?? false,
-          showReviews: false,
+          showReviews: true,
+          reviews: reviews,
+          rating: rating,
+          reviewCount: reviews.length,
           recipeId: recipeId,
           ingredientList: r.ingredients.map(titleCase).toList(),
           ingredientQuantities: {
