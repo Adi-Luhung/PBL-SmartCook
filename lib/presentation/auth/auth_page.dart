@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'reset_password_page.dart';
 import 'widgets/login_form.dart';
 import 'widgets/register_form.dart';
 
@@ -25,6 +26,14 @@ class _AuthPageState extends State<AuthPage> {
     _pageController = PageController(initialPage: widget.initialIsLogin ? 0 : 1);
 
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const ResetPasswordPage(),
+          ),
+        );
+        return;
+      }
       if (data.session != null && mounted && Navigator.canPop(context)) {
         Navigator.of(context).pop();
       }

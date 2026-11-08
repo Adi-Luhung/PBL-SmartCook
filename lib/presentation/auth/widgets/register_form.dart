@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_notification.dart';
 import 'auth_text_field.dart';
 import 'google_sign_in_button.dart';
 
@@ -36,8 +37,8 @@ class _RegisterFormState extends State<RegisterForm> {
     super.initState();
     _loadRememberedEmail();
     _passwordFocusNode.addListener(() {
-      if (_passwordFocusNode.hasFocus && !_showPasswordRequirements) {
-        setState(() => _showPasswordRequirements = true);
+      if (mounted) {
+        setState(() => _showPasswordRequirements = _passwordFocusNode.hasFocus);
       }
     });
   }
@@ -85,11 +86,15 @@ class _RegisterFormState extends State<RegisterForm> {
     if (m.contains('invalid') && m.contains('email')) {
       return 'Format email tidak valid.';
     }
+    final secondsMatch = RegExp(r'(\d+)\s*second').firstMatch(m);
+    if (secondsMatch != null) {
+      final seconds = secondsMatch.group(1);
+      return 'Demi keamanan, silakan tunggu $seconds detik sebelum mencoba lagi.';
+    }
     return message;
   }
 
   Future<void> _submit() async {
-    final messenger = ScaffoldMessenger.of(context);
     final username = _username.text.trim();
     final email = _email.text.trim();
     final password = _password.text;
@@ -134,13 +139,9 @@ class _RegisterFormState extends State<RegisterForm> {
 
       if (res.session == null && mounted) {
         widget.onLoginTap();
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Pendaftaran berhasil! Cek emailmu untuk konfirmasi, lalu masuk.',
-            ),
-            backgroundColor: Color(0xFF084E38),
-          ),
+        AppNotification.showSuccess(
+          context,
+          'Pendaftaran berhasil! Cek emailmu untuk konfirmasi, lalu masuk.',
         );
       } else if (mounted && Navigator.canPop(context)) {
         Navigator.of(context).pop();

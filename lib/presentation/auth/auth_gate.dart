@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/services/profile_photo_service.dart';
 import '../shell/main_shell.dart';
+import 'reset_password_page.dart';
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -13,6 +16,27 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   String? _lastUserId;
+  StreamSubscription<AuthState>? _authSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const ResetPasswordPage(),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
 
   void _handleSessionChange(Session? session) {
     final userId = session?.user.id;

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_notification.dart';
 import 'google_logo.dart';
 
 class GoogleSignInButton extends StatefulWidget {
@@ -99,12 +100,9 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton>
       final redirectTo = kIsWeb ? null : Env.authCallbackUrl;
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Membuka browser untuk masuk dengan Google...'),
-            duration: Duration(seconds: 2),
-            backgroundColor: Color(0xFF084E38),
-          ),
+        AppNotification.showInfo(
+          context,
+          'Membuka browser untuk masuk dengan Google...',
         );
       }
 
@@ -118,38 +116,21 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton>
         setState(() => _loading = false);
         const msg = 'Tidak dapat membuka browser untuk autentikasi Google.';
         widget.onError?.call(msg);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(msg),
-            backgroundColor: Color(0xFFDC2626),
-          ),
-        );
+        AppNotification.showError(context, msg);
       }
     } on AuthException catch (e) {
       if (mounted) {
         setState(() => _loading = false);
         final msg = _translateError(e.message);
         widget.onError?.call(msg);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            backgroundColor: const Color(0xFFDC2626),
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        AppNotification.showError(context, msg);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
         final msg = _translateError(e.toString());
         widget.onError?.call(msg);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            backgroundColor: const Color(0xFFDC2626),
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        AppNotification.showError(context, msg);
       }
     }
   }

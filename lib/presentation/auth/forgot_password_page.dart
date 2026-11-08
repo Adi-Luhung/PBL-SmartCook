@@ -1,9 +1,15 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/config/env.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/widgets/app_notification.dart';
 import 'auth_page.dart';
+import 'reset_password_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key, this.initialEmail});
@@ -16,6 +22,11 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   late final TextEditingController _emailController;
+  StreamSubscription<AuthState>? _authSub;
+  Timer? _countdownTimer;
+  int _remainingCooldownSeconds = 0;
+  bool _showCooldownWarning = false;
+  bool _emailSent = false;
   bool _loading = false;
   String? _error;
 
@@ -23,12 +34,76 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   void initState() {
     super.initState();
     _emailController = TextEditingController(text: widget.initialEmail ?? '');
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const ResetPasswordPage(),
+          ),
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
+    _authSub?.cancel();
     _emailController.dispose();
     super.dispose();
+  }
+
+  void _startCooldown(int seconds, {bool showWarning = false}) {
+    _countdownTimer?.cancel();
+    _remainingCooldownSeconds = seconds;
+    _showCooldownWarning = showWarning;
+
+    if (_showCooldownWarning) {
+      setState(() {
+        _error =
+            'Demi keamanan, silakan tunggu $_remainingCooldownSeconds detik sebelum meminta kirim ulang.';
+      });
+    }
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_remainingCooldownSeconds <= 1) {
+        timer.cancel();
+        setState(() {
+          _remainingCooldownSeconds = 0;
+          _showCooldownWarning = false;
+          _error = null;
+        });
+      } else {
+        setState(() {
+          _remainingCooldownSeconds--;
+          if (_showCooldownWarning) {
+            _error =
+                'Demi keamanan, silakan tunggu $_remainingCooldownSeconds detik sebelum meminta kirim ulang.';
+          }
+        });
+      }
+    });
+  }
+
+  String _translateError(String message) {
+    final m = message.toLowerCase();
+    final secondsMatch = RegExp(r'(\d+)\s*second').firstMatch(m);
+    if (secondsMatch != null) {
+      final seconds = secondsMatch.group(1);
+      return 'Demi keamanan, silakan tunggu $seconds detik sebelum meminta kirim ulang.';
+    }
+    if (m.contains('rate limit') || m.contains('too many requests')) {
+      return 'Terlalu banyak permintaan. Silakan tunggu beberapa saat sebelum mencoba lagi.';
+    }
+    if (m.contains('user not found') || m.contains('email not found')) {
+      return 'Alamat email tidak terdaftar di sistem.';
+    }
+    return message;
   }
 
   Future<void> _submit() async {
@@ -45,29 +120,47 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       return;
     }
 
+    if (_remainingCooldownSeconds > 0) {
+      _showCooldownWarning = true;
+      setState(() {
+        _error =
+            'Demi keamanan, silakan tunggu $_remainingCooldownSeconds detik sebelum meminta kirim ulang.';
+      });
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
     });
 
     try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      final redirectTo = kIsWeb ? null : Env.authCallbackUrl;
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: redirectTo,
+      );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Tautan instruksi pemulihan kata sandi telah dikirim ke email Anda.',
-            ),
-            backgroundColor: Color(0xFF084E38),
-            duration: Duration(seconds: 4),
-          ),
+        setState(() => _emailSent = true);
+        _startCooldown(60, showWarning: false);
+        AppNotification.showSuccess(
+          context,
+          'Tautan pemulihan kata sandi telah dikirim ke email Anda. Silakan buka pesan di emailmu.',
         );
-        Navigator.of(context).pop();
       }
     } on AuthException catch (e) {
       if (mounted) {
-        setState(() => _error = e.message);
+        final m = e.message.toLowerCase();
+        final secondsMatch = RegExp(r'(\d+)\s*second').firstMatch(m);
+        if (secondsMatch != null) {
+          final seconds = int.tryParse(secondsMatch.group(1)!) ?? 60;
+          _startCooldown(seconds, showWarning: true);
+        } else {
+          final translated = _translateError(e.message);
+          setState(() => _error = translated);
+          AppNotification.showError(context, translated);
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -281,6 +374,29 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ),
                     ),
                   ],
+                  if (_emailSent) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFD1FAE5)),
+                      ),
+                      child: const Text(
+                        'Silakan buka email Anda dan klik tautan pada pesan untuk membuat kata sandi baru.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 12.5,
+                          color: Color(0xFF084E38),
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   Container(
                     height: 52,
@@ -313,9 +429,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text(
-                              'Lanjutkan',
-                              style: TextStyle(
+                          : Text(
+                              _emailSent ? 'Kirim Ulang' : 'Lanjutkan',
+                              style: const TextStyle(
                                 fontFamily: AppTextStyles.fontFamily,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
