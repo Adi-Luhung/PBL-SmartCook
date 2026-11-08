@@ -1,144 +1,175 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'widgets/login_form.dart';
 import 'widgets/register_form.dart';
 
-/// Halaman Login & Registrasi — satu layar, dua form yang ditukar
-/// lewat tab pill "Masuk" / "Daftar", sesuai Figma.
 class AuthPage extends StatefulWidget {
-  const AuthPage({super.key});
+  const AuthPage({super.key, this.initialIsLogin = true});
+
+  final bool initialIsLogin;
 
   @override
   State<AuthPage> createState() => _AuthPageState();
 }
 
 class _AuthPageState extends State<AuthPage> {
-  bool _isLogin = true;
+  late final PageController _pageController;
+  StreamSubscription<AuthState>? _authSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.initialIsLogin ? 0 : 1);
+
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.session != null && mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _authSub?.cancel();
+    super.dispose();
+  }
+
+  void _goToLogin() {
+    FocusScope.of(context).unfocus();
+    _pageController.animateToPage(
+      0,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeInOutCubic,
+    );
+  }
+
+  void _goToRegister() {
+    FocusScope.of(context).unfocus();
+    _pageController.animateToPage(
+      1,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeInOutCubic,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final canPop = Navigator.canPop(context);
+
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 12),
-              const _Header(),
-              const SizedBox(height: 20),
-              _TabSwitcher(
-                isLogin: _isLogin,
-                onChanged: (v) => setState(() => _isLogin = v),
-              ),
-              const SizedBox(height: 20),
-              if (_isLogin)
-                LoginForm(onRegisterTap: () => setState(() => _isLogin = false))
-              else
-                RegisterForm(onLoginTap: () => setState(() => _isLogin = true)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: const Icon(Icons.restaurant, color: AppColors.primary),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('SmartCook', style: AppTextStyles.h1),
-            const SizedBox(width: 6),
-            Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Rekomendasi Resep Berdasarkan Bahan Dapurmu',
-          textAlign: TextAlign.center,
-          style: AppTextStyles.bodyMuted,
-        ),
-      ],
-    );
-  }
-}
-
-class _TabSwitcher extends StatelessWidget {
-  const _TabSwitcher({required this.isLogin, required this.onChanged});
-
-  final bool isLogin;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
+      backgroundColor: const Color(0xFFFAFCFA),
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          _TabButton(label: 'Masuk', active: isLogin, onTap: () => onChanged(true)),
-          _TabButton(label: 'Daftar', active: !isLogin, onTap: () => onChanged(false)),
+          const Positioned.fill(
+            child: CustomPaint(
+              painter: SmoothAuthBackgroundPainter(),
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (canPop)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 12, top: 8),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 20,
+                          color: Color(0xFF334155),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          24,
+                          canPop ? 16.0 : 48.0,
+                          24,
+                          36,
+                        ),
+                        child: LoginForm(
+                          onRegisterTap: _goToRegister,
+                        ),
+                      ),
+                      SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          24,
+                          canPop ? 16.0 : 48.0,
+                          24,
+                          36,
+                        ),
+                        child: RegisterForm(
+                          onLoginTap: _goToLogin,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _TabButton extends StatelessWidget {
-  const _TabButton({required this.label, required this.active, required this.onTap});
-
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
+class SmoothAuthBackgroundPainter extends CustomPainter {
+  const SmoothAuthBackgroundPainter();
 
   @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: active ? AppColors.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.label.copyWith(
-              color: active ? Colors.white : AppColors.textSecondary,
-            ),
-          ),
-        ),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final basePaint = Paint()..color = const Color(0xFFFAFCFA);
+    canvas.drawRect(rect, basePaint);
+
+    final mintPaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(1.10, -0.90),
+        radius: 1.40,
+        colors: [
+          const Color(0xFFC7F3DE).withValues(alpha: 0.65),
+          const Color(0xFFD6F6E7).withValues(alpha: 0.40),
+          const Color(0xFFE5FAF0).withValues(alpha: 0.20),
+          const Color(0xFFF3FCF6).withValues(alpha: 0.06),
+          const Color(0xFFFAFCFA).withValues(alpha: 0.0),
+        ],
+        stops: const [0.0, 0.35, 0.60, 0.82, 1.0],
+      ).createShader(rect);
+    canvas.drawRect(rect, mintPaint);
+
+    final creamPaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(1.10, 0.95),
+        radius: 1.30,
+        colors: [
+          const Color(0xFFFEE8C6).withValues(alpha: 0.65),
+          const Color(0xFFFFF0D6).withValues(alpha: 0.40),
+          const Color(0xFFFFF6E6).withValues(alpha: 0.18),
+          const Color(0xFFFFFBF3).withValues(alpha: 0.05),
+          const Color(0xFFFAFCFA).withValues(alpha: 0.0),
+        ],
+        stops: const [0.0, 0.35, 0.60, 0.82, 1.0],
+      ).createShader(rect);
+    canvas.drawRect(rect, creamPaint);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
