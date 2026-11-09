@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/services/ml_service.dart';
 import '../core/utils/nutrition.dart';
 import '../data/models.dart';
 import '../data/profile_repository.dart';
@@ -101,3 +102,30 @@ final profileProvider = FutureProvider<UserProfile?>((ref) async {
 final recipeReviewsProvider = FutureProvider.family<List<RecipeReview>, int>(
     (ref, recipeId) =>
         ref.watch(recipeRepositoryProvider).fetchReviews(recipeId));
+
+
+// ── Machine Learning Microservice ──────────────────────────────────────────
+
+final mlServiceProvider = Provider<MlService>((ref) => MlService());
+
+/// Status koneksi ke server Machine Learning
+final mlApiAvailableProvider = FutureProvider<bool>(
+    (ref) => ref.watch(mlServiceProvider).isAvailable());
+
+/// Prediksi diet personal dari model Machine Learning (Decision Tree)
+final mlDietPredictionProvider = FutureProvider<MlDietResult?>((ref) async {
+  final profile = ref.watch(profileProvider).value;
+  if (profile == null) return null;
+  final bmi = profile.bmi;
+  final tdee = profile.tdee;
+  if (bmi == null || tdee == null) return null;
+
+  return ref.watch(mlServiceProvider).predictDiet(
+        bmi: bmi,
+        tdee: tdee,
+        weightKg: profile.weightKg,
+        heightCm: profile.heightCm,
+        age: profile.age,
+        gender: profile.gender,
+      );
+});
