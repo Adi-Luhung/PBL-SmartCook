@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_text_styles.dart';
 import '../auth/auth_gate.dart';
+import '../onboarding/onboarding_page.dart';
 
 class _LetterAnimation {
   const _LetterAnimation({
@@ -26,24 +28,22 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _textController;
   late final List<_LetterAnimation> _letterAnimations;
+  bool _hasNavigated = false;
 
   static const String _firstWord = 'Smart';
   static const String _secondWord = 'Cook';
 
-  // Warna hijau khas SmartCook
   static const Color _greenColor = Color(0xFF084E38);
 
   @override
   void initState() {
     super.initState();
 
-    // Controller untuk animasi huruf demi huruf
     _textController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     );
 
-    // Menghitung stagger animasi per huruf
     final totalLetters = _firstWord.length + _secondWord.length;
     _letterAnimations = List.generate(totalLetters, (index) {
       final double start = (index * 0.07).clamp(0.0, 0.7);
@@ -74,9 +74,13 @@ class _SplashScreenState extends State<SplashScreen>
     _textController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         Future.delayed(const Duration(milliseconds: 700), () {
-          _navigateToAuth();
+          _navigateToNext();
         });
       }
+    });
+
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      _navigateToNext();
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -92,11 +96,23 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  void _navigateToAuth() {
+  Future<void> _navigateToNext() async {
+    if (!mounted || _hasNavigated) return;
+    _hasNavigated = true;
+
+    bool completed = false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      completed = prefs.getBool('smartcook_onboarding_completed') ?? false;
+    } catch (_) {
+      completed = false;
+    }
+
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, animation, secondaryAnimation) => const AuthGate(),
+        pageBuilder: (_, animation, secondaryAnimation) =>
+            completed ? const AuthGate() : const OnboardingPage(),
         transitionsBuilder: (_, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -142,7 +158,6 @@ class _SplashScreenState extends State<SplashScreen>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // "Smart" (Warna Gelap Slate)
             ...List.generate(
               _firstWord.length,
               (i) => _buildLetter(
@@ -152,7 +167,6 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
             const SizedBox(width: 4),
-            // "Cook" (Warna Hijau)
             ...List.generate(
               _secondWord.length,
               (i) => _buildLetter(
