@@ -3,31 +3,26 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/services/bookmark_service.dart';
 import '../../core/services/cook_doc_service.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/widgets/app_notification.dart';
 import '../../data/models.dart';
 
 void _snack(BuildContext context, String message, {bool error = false}) {
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Text(message),
-      backgroundColor: error ? AppColors.danger : AppColors.primary,
-    ));
+  if (error) {
+    AppNotification.showError(context, message);
+  } else {
+    AppNotification.showSuccess(context, message);
+  }
 }
 
 /// Simpan / hapus bookmark resep database; tampilkan pesan kalau gagal.
 Future<void> toggleRecipeBookmark(
     BuildContext context, RecipeSummary recipe) async {
-  final messenger = ScaffoldMessenger.of(context);
   try {
     await BookmarkService.instance.toggleRecipe(SavedRecipe.fromSummary(recipe));
   } catch (_) {
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(
-        content: Text('Gagal menyimpan resep. Coba lagi.'),
-        backgroundColor: AppColors.danger,
-      ));
+    if (context.mounted) {
+      AppNotification.showError(context, 'Gagal menyimpan resep. Coba lagi.');
+    }
   }
 }
 

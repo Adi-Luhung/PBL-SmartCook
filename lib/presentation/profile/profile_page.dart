@@ -13,6 +13,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../core/widgets/app_button.dart';
 import '../../data/models.dart';
 import '../../providers/app_providers.dart';
+import '../auth/auth_page.dart';
 import '../common/actions.dart';
 import '../explore/detail_resep_page.dart';
 import '../recipe/recipe_detail_loader.dart';
@@ -35,6 +36,12 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(authStateProvider).value?.session ??
+        ref.watch(supabaseProvider).auth.currentSession;
+    if (session == null) {
+      return const AuthPage(initialIsLogin: true);
+    }
+
     final profile = ref.watch(profileProvider).value;
     final email = ref.watch(supabaseProvider).auth.currentUser?.email;
 
