@@ -1,10 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Menyimpan foto profil secara permanen per akun user.
+/// Menyimpan foto profil secara permanen per akun user di penyimpanan lokal.
 ///
 /// - File disimpan di `<docsDir>/profile_photos/<userId>.png` — tidak akan
 ///   dihapus OS karena ada di documents directory (bukan temp/cache).
@@ -66,6 +67,11 @@ class ProfilePhotoService extends ChangeNotifier {
     // Salin dari temp ke dokumen permanen
     await File(sourcePath).copy(destPath);
 
+    // Bersihkan cache gambar agar seluruh avatar langsung memperbarui tampilan
+    await FileImage(File(destPath)).evict();
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+
     _photoPath = destPath;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyFor(_currentUserId!), destPath);
@@ -77,9 +83,12 @@ class ProfilePhotoService extends ChangeNotifier {
     if (_currentUserId == null) return;
 
     if (_photoPath != null) {
+      await FileImage(File(_photoPath!)).evict();
       final f = File(_photoPath!);
       if (f.existsSync()) await f.delete();
     }
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
 
     _photoPath = null;
     final prefs = await SharedPreferences.getInstance();

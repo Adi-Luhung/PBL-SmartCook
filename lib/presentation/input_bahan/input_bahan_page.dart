@@ -368,7 +368,7 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
     final List<_CategoryGroup> allCategories = catalog.when(
       data: _groupsFrom,
       loading: () => const <_CategoryGroup>[],
-      error: (_, __) => _allCategories,
+      error: (_, _) => _allCategories,
     );
 
     final displayedCategories = allCategories.where((category) {
