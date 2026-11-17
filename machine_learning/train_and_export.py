@@ -12,12 +12,13 @@ from sklearn.model_selection import train_test_split
 SEED = 42
 np.random.seed(SEED)
 
-NORMALISASI = {
-    'cabe': 'cabai', 'telor': 'telur', 'saos': 'saus', 'asem': 'asam',
-    'bombay': 'bombai', 'trasi': 'terasi', 'baput': 'bawang putih',
-    'bamer': 'bawang merah', 'daun jeruk purut': 'daun jeruk',
-    'royko': 'penyedap', 'masako': 'penyedap', 'micin': 'penyedap'
-}
+import json
+import shutil
+
+# Kamus normalisasi (Lexicon) dibaca otomatis dari file eksternal
+KAMUS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'kamus_normalisasi.json')
+with open(KAMUS_PATH, 'r', encoding='utf-8') as f:
+    NORMALISASI = json.load(f)
 
 STOPWORDS_DAPUR = set(
     'secukupnya secukup sdm sdt gr gram kg ml buah siung biji iris tipis halus sedikit untuk dan atau yang '
@@ -140,6 +141,10 @@ def main():
     joblib.dump(matrix_recom, os.path.join(models_dir, 'matrix_recom.joblib'))
     joblib.dump(recipes_meta, os.path.join(models_dir, 'recipes_meta.joblib'))
     print("Modul 1 tersimpan: vec_recom.joblib, matrix_recom.joblib, recipes_meta.joblib")
+    
+    # Salin kamus ke folder model agar backend memakai kamus yang sama persis dengan saat training
+    shutil.copy(KAMUS_PATH, os.path.join(models_dir, 'kamus_normalisasi.json'))
+    print("Kamus tersalin: kamus_normalisasi.json")
     
     print("\n[SUKSES LENGKAP] Semua 3 Modul Model ML telah berhasil dilatih dan diekspor ke backend_ml/models/!")
 

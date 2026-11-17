@@ -11,12 +11,11 @@ from pydantic import BaseModel
 from sklearn.metrics.pairwise import cosine_similarity
 
 # ── Dependency Analyzer untuk Model TF-IDF ──────────────────────────────────
-NORMALISASI = {
-    'cabe': 'cabai', 'telor': 'telur', 'saos': 'saus', 'asem': 'asam',
-    'bombay': 'bombai', 'trasi': 'terasi', 'baput': 'bawang putih',
-    'bamer': 'bawang merah', 'daun jeruk purut': 'daun jeruk',
-    'royko': 'penyedap', 'masako': 'penyedap', 'micin': 'penyedap'
-}
+# Kamus normalisasi dibaca dari models/ (disalin otomatis oleh train_and_export.py)
+import json
+KAMUS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'kamus_normalisasi.json')
+with open(KAMUS_PATH, 'r', encoding='utf-8') as f:
+    NORMALISASI = json.load(f)
 
 STOPWORDS_DAPUR = set(
     'secukupnya secukup sdm sdt gr gram kg ml buah siung biji iris tipis halus sedikit untuk dan atau yang '
