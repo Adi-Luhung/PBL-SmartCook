@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/services/keep_screen_on_service.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models.dart';
 import '../../providers/app_providers.dart';
@@ -66,9 +67,11 @@ class DetailResepPage extends ConsumerWidget {
     final effectiveCount =
         effectiveReviews.isNotEmpty ? effectiveReviews.length : reviewCount;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
+    return KeepScreenOnPageScope(
+      pageName: 'DetailResepPage',
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: SafeArea(
         child: Column(
           children: [
             Container(
@@ -212,8 +215,9 @@ class DetailResepPage extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildHeroCard() {
     return Container(

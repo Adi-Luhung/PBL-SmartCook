@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/bookmark_service.dart';
 import '../../core/services/ingredient_service.dart';
+import '../../core/services/keep_screen_on_service.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../profile/profile_page.dart';
 import 'rating_hasil_masakan_page.dart';
@@ -83,19 +84,56 @@ class DetailPanduanMasakPage extends StatefulWidget {
   State<DetailPanduanMasakPage> createState() => _DetailPanduanMasakPageState();
 }
 
-class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
+class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage>
+    with WidgetsBindingObserver {
   final Set<int> _helpfulReviews = {};
 
   @override
   void initState() {
     super.initState();
+    debugPrint('[KEEP_SCREEN_ON] Halaman dibuka');
+    WidgetsBinding.instance.addObserver(this);
+    // Aktifkan Keep Screen On setelah frame pertama selesai dirender
+    // agar Activity Window Android sudah siap menerima FLAG_KEEP_SCREEN_ON.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        KeepScreenOnService.instance.enable(source: 'Halaman dibuka');
+      }
+    });
     IngredientService.instance.addListener(_onIngredientsChanged);
   }
 
   @override
   void dispose() {
+    debugPrint('[KEEP_SCREEN_ON] Halaman ditutup');
+    WidgetsBinding.instance.removeObserver(this);
+    // Nonaktifkan Keep Screen On otomatis saat pengguna keluar dari halaman
+    KeepScreenOnService.instance.disable(source: 'Halaman ditutup');
     IngredientService.instance.removeListener(_onIngredientsChanged);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint('[KEEP_SCREEN_ON] Lifecycle berubah: $state');
+    if (state == AppLifecycleState.resumed) {
+      // Ketika aplikasi kembali ke foreground, pastikan wakelock aktif jika halaman ini sedang tampil
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final isCurrent = ModalRoute.of(context)?.isCurrent ?? true;
+          if (isCurrent) {
+            KeepScreenOnService.instance.enable(source: 'Aplikasi resumed');
+          }
+        }
+      });
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      // Hanya nonaktifkan wakelock saat aplikasi benar-benar masuk ke background atau ditutup.
+      // JANGAN nonaktifkan saat AppLifecycleState.inactive karena pada Android, inactive
+      // dipicu saat transisi jendela / notifikasi tanpa meninggalkan aplikasi.
+      KeepScreenOnService.instance.disable(source: 'Aplikasi $state');
+    }
   }
 
   void _onIngredientsChanged() {
@@ -389,11 +427,15 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
             ],
           ),
           GestureDetector(
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              KeepScreenOnService.instance.disable(source: 'Navigasi ke Profile');
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ProfilePage()),
               );
+              if (mounted) {
+                KeepScreenOnService.instance.enable(source: 'Kembali dari Profile');
+              }
             },
             child: Container(
               width: 36,
@@ -1486,8 +1528,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
               child: SizedBox(
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
+                  onPressed: () async {
+                    KeepScreenOnService.instance.disable(source: 'Navigasi ke Rating');
+                    await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => RatingHasilMasakanPage(
                           title: widget.title,
@@ -1500,6 +1543,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                         ),
                       ),
                     );
+                    if (mounted) {
+                      KeepScreenOnService.instance.enable(source: 'Kembali dari Rating');
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF084E38),
