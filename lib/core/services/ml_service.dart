@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:http/http.dart' as http;
 
 import '../config/env.dart';
@@ -54,14 +54,11 @@ class MlService {
           : Env.mlApiUrl;
       return [u];
     }
-    if (!kIsWeb && Platform.isAndroid) {
-      return const [
-        'http://127.0.0.1:8000',
-        'http://192.168.1.6:8000',
-        'http://10.0.2.2:8000',
-      ];
-    }
-    return const ['http://127.0.0.1:8000'];
+    return const [
+      'https://pbl-smartcook.onrender.com',
+      'http://127.0.0.1:8000',
+      'http://10.0.2.2:8000',
+    ];
   }
 
   /// Memeriksa apakah Backend ML Python sedang aktif / online.
@@ -70,9 +67,12 @@ class MlService {
       try {
         final res = await _client
             .get(Uri.parse('$base/health'))
-            .timeout(const Duration(milliseconds: 1200));
+            .timeout(const Duration(seconds: 10));
         if (res.statusCode == 200) return true;
-      } catch (_) {
+      } catch (e) {
+        if (kDebugMode) {
+          print('[MlService] isAvailable error pada $base: $e');
+        }
         continue;
       }
     }
@@ -93,9 +93,13 @@ class MlService {
 
     for (final base in candidateUrls) {
       try {
+        final uri = Uri.parse('$base/predict-diet');
+        if (kDebugMode) {
+          print('[MlService] Mengirim request ke: $uri');
+        }
         final res = await _client
             .post(
-              Uri.parse('$base/predict-diet'),
+              uri,
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({
                 'bmi': bmi,
@@ -107,7 +111,11 @@ class MlService {
                 'gender': gender ?? 'Pria',
               }),
             )
-            .timeout(const Duration(milliseconds: 1500));
+            .timeout(const Duration(seconds: 15));
+
+        if (kDebugMode) {
+          print('[MlService] Status response: ${res.statusCode}');
+        }
 
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -119,7 +127,10 @@ class MlService {
             isLiveFromApi: true,
           );
         }
-      } catch (_) {
+      } catch (e) {
+        if (kDebugMode) {
+          print('[MlService] Gagal menghubungi $base: $e');
+        }
         continue;
       }
     }
@@ -154,7 +165,7 @@ class MlService {
                 'ingredients': ingredients,
               }),
             )
-            .timeout(const Duration(milliseconds: 1500));
+            .timeout(const Duration(seconds: 15));
 
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -164,7 +175,10 @@ class MlService {
             mlModel: data['ml_model'] as String? ?? 'Logistic Regression',
           );
         }
-      } catch (_) {
+      } catch (e) {
+        if (kDebugMode) {
+          print('[MlService] Gagal predictCategory pada $base: $e');
+        }
         continue;
       }
     }
@@ -187,14 +201,17 @@ class MlService {
                 'limit': limit,
               }),
             )
-            .timeout(const Duration(milliseconds: 1500));
+            .timeout(const Duration(seconds: 15));
 
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body) as Map<String, dynamic>;
           final list = (data['recipes'] as List?) ?? [];
           return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
         }
-      } catch (_) {
+      } catch (e) {
+        if (kDebugMode) {
+          print('[MlService] Gagal recommendFromMl pada $base: $e');
+        }
         continue;
       }
     }

@@ -4,7 +4,10 @@ class Env {
   static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
   static const String supabaseAnonKey =
       String.fromEnvironment('SUPABASE_ANON_KEY');
-  static const String mlApiUrl = String.fromEnvironment('ML_API_URL');
+  static const String mlApiUrl = String.fromEnvironment(
+    'ML_API_URL',
+    defaultValue: 'https://pbl-smartcook.onrender.com',
+  );
 
   static const String authCallbackUrl = 'io.supabase.smartcook://login-callback';
 
