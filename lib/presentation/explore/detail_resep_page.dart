@@ -16,11 +16,11 @@ class DetailResepPage extends ConsumerWidget {
     required this.title,
     this.imageUrl,
     this.imageAsset,
-    this.calories = 350,
-    this.portions = 2,
+    this.calories = 0,
+    this.portions = 1,
     this.isDiet = false,
-    this.rating = 4.8,
-    this.reviewCount = 120,
+    this.rating = 0.0,
+    this.reviewCount = 0,
     this.reviews = const [],
     this.ingredientList = const [],
     this.stepList = const [],
@@ -61,10 +61,11 @@ class DetailResepPage extends ConsumerWidget {
         : reviews;
     final effectiveRating = effectiveReviews.isNotEmpty
         ? (effectiveReviews.map((e) => e.rating).reduce((a, b) => a + b) /
-            effectiveReviews.length)
+              effectiveReviews.length)
         : rating;
-    final effectiveCount =
-        effectiveReviews.isNotEmpty ? effectiveReviews.length : reviewCount;
+    final effectiveCount = effectiveReviews.isNotEmpty
+        ? effectiveReviews.length
+        : reviewCount;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -241,10 +242,9 @@ class DetailResepPage extends ConsumerWidget {
             Image.network(
               imageUrl!,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  imageAsset != null
-                      ? Image.asset(imageAsset!, fit: BoxFit.cover)
-                      : const SizedBox.shrink(),
+              errorBuilder: (context, error, stackTrace) => imageAsset != null
+                  ? Image.asset(imageAsset!, fit: BoxFit.cover)
+                  : const SizedBox.shrink(),
             )
           else if (imageAsset != null)
             Image.asset(imageAsset!, fit: BoxFit.cover),
@@ -283,7 +283,9 @@ class DetailResepPage extends ConsumerWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(999),
@@ -312,7 +314,9 @@ class DetailResepPage extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(999),
@@ -342,7 +346,9 @@ class DetailResepPage extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF059669),
                           borderRadius: BorderRadius.circular(999),
@@ -409,7 +415,9 @@ class DetailResepPage extends ConsumerWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       Container(
@@ -694,14 +702,16 @@ class DetailResepPage extends ConsumerWidget {
                   final initial = review.userName.isNotEmpty
                       ? review.userName[0].toUpperCase()
                       : 'U';
-                  final isOwner = review.userId != null &&
+                  final isOwner =
+                      review.userId != null &&
                       currentUserId != null &&
                       review.userId == currentUserId &&
                       review.docId != null;
 
                   return Padding(
                     padding: EdgeInsets.only(
-                        bottom: index < effectiveReviews.length - 1 ? 16 : 0),
+                      bottom: index < effectiveReviews.length - 1 ? 16 : 0,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -773,8 +783,7 @@ class DetailResepPage extends ConsumerWidget {
                                     context: context,
                                     builder: (dialogCtx) => AlertDialog(
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16),
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
                                       backgroundColor: Colors.white,
                                       title: const Text(
@@ -804,13 +813,15 @@ class DetailResepPage extends ConsumerWidget {
                                           onPressed: () =>
                                               Navigator.pop(dialogCtx, true),
                                           style: TextButton.styleFrom(
-                                            foregroundColor:
-                                                const Color(0xFFDC2626),
+                                            foregroundColor: const Color(
+                                              0xFFDC2626,
+                                            ),
                                           ),
                                           child: const Text(
                                             'Hapus',
                                             style: TextStyle(
-                                                fontWeight: FontWeight.w700),
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -820,9 +831,12 @@ class DetailResepPage extends ConsumerWidget {
                                     await ref
                                         .read(recipeRepositoryProvider)
                                         .deleteReview(
-                                            review.docId!, currentUserId);
+                                          review.docId!,
+                                          currentUserId,
+                                        );
                                     ref.invalidate(
-                                        recipeReviewsProvider(recipeId!));
+                                      recipeReviewsProvider(recipeId!),
+                                    );
                                   }
                                 },
                                 child: const Icon(
@@ -843,7 +857,9 @@ class DetailResepPage extends ConsumerWidget {
                                 .map(
                                   (tag) => Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFD1FAE5),
                                       borderRadius: BorderRadius.circular(12),
@@ -948,9 +964,7 @@ class DetailResepPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         title: const Row(
           children: [
@@ -981,8 +995,10 @@ class DetailResepPage extends ConsumerWidget {
             height: 1.45,
           ),
         ),
-        actionsPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        actionsPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -1001,9 +1017,7 @@ class DetailResepPage extends ConsumerWidget {
               Navigator.pop(dialogContext);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const AuthPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const AuthPage()),
               );
             },
             style: ElevatedButton.styleFrom(
@@ -1012,8 +1026,7 @@ class DetailResepPage extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             child: const Text(
               'Masuk Sekarang',

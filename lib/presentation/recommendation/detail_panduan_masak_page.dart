@@ -3,28 +3,9 @@ import 'package:flutter/material.dart';
 import '../../core/services/bookmark_service.dart';
 import '../../core/services/ingredient_service.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../data/models.dart';
 import '../profile/profile_page.dart';
 import 'rating_hasil_masakan_page.dart';
-
-class RecipeReview {
-  const RecipeReview({
-    required this.userName,
-    this.userAvatar,
-    required this.rating,
-    required this.comment,
-    required this.date,
-    this.isVerified = false,
-    this.helpfulCount = 0,
-  });
-
-  final String userName;
-  final String? userAvatar;
-  final double rating;
-  final String comment;
-  final String date;
-  final bool isVerified;
-  final int helpfulCount;
-}
 
 class DetailPanduanMasakPage extends StatefulWidget {
   const DetailPanduanMasakPage({
@@ -32,18 +13,18 @@ class DetailPanduanMasakPage extends StatefulWidget {
     required this.title,
     this.imageUrl,
     this.imageAsset,
-    this.calories = 380,
-    this.portions = 2,
+    this.calories = 0,
+    this.portions = 1,
     this.isDiet = false,
-    this.rating = 4.8,
-    this.reviewCount = 142,
+    this.rating = 0.0,
+    this.reviewCount = 0,
     this.reviews = const [],
     this.ingredientList = const [],
     this.stepList = const [],
     this.userIngredients,
-    this.proteinGrams = 30,
-    this.carbsGrams = 14,
-    this.fatGrams = 12,
+    this.proteinGrams = 0,
+    this.carbsGrams = 0,
+    this.fatGrams = 0,
     this.weightPerPortionGrams,
     this.caloriesPer100g,
     this.ingredientQuantities,
@@ -66,6 +47,7 @@ class DetailPanduanMasakPage extends StatefulWidget {
   final int proteinGrams;
   final int carbsGrams;
   final int fatGrams;
+
   /// Dari dataset: perkiraan berat bahan per porsi (g) dan kepadatan kalori (kkal / 100 g).
   final int? weightPerPortionGrams;
   final int? caloriesPer100g;
@@ -134,49 +116,29 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
     return const [
       {
         'title': 'Persiapan & Marinasi',
-        'description':
-            'Potong dadu dada ayam, lumuri dengan 1 sdm kecap asin, merica, dan sesendok teh minyak wijen. Diamkan 5 menit agar serat daging empuk dan bumbu meresap sempurna.',
+        'description': 'Potong dadu dada ayam, lumuri dengan 1 sdm kecap asin, merica, dan sesendok teh minyak wijen. Diamkan 5 menit agar serat daging empuk dan bumbu meresap sempurna.',
       },
       {
         'title': 'Tumis Bumbu Aromatik',
-        'description':
-            'Panaskan 1 sdm minyak di wajan anti lengket. Masukkan bawang putih cincang, tumis dengan api sedang hingga harum kekuningan dan tidak gosong.',
+        'description': 'Panaskan 1 sdm minyak di wajan anti lengket. Masukkan bawang putih cincang, tumis dengan api sedang hingga harum kekuningan dan tidak gosong.',
       },
       {
         'title': 'Pematangan Daging Ayam',
-        'description':
-            'Masukkan potongan ayam yang telah dimarinasi ke wajan. Aduk cepat hingga seluruh permukaan ayam berubah warna pucat keemasan dan matang gurih merata.',
+        'description': 'Masukkan potongan ayam yang telah dimarinasi ke wajan. Aduk cepat hingga seluruh permukaan ayam berubah warna pucat keemasan dan matang gurih merata.',
       },
       {
         'title': 'Karamelisasi Kecap & Daun Bawang',
-        'description':
-            'Tuangkan kecap manis, irisan daun bawang, dan potongan tomat. Aduk merata di atas api sedang hingga saus mengental mengkilap melapisi setiap potongan ayam.',
+        'description': 'Tuangkan kecap manis, irisan daun bawang, dan potongan tomat. Aduk merata di atas api sedang hingga saus mengental mengkilap melapisi setiap potongan ayam.',
       },
       {
         'title': 'Penyajian Hangat',
         'tag': 'Sajikan Langsung',
-        'description':
-            'Angkat dari wajan dan sajikan selagi hangat mengepul bersama nasi putih pulen hangat atau quinoa sehat favorit keluarga. Selamat menikmati santapan buatan sendiri!',
+        'description': 'Angkat dari wajan dan sajikan selagi hangat mengepul bersama nasi putih pulen hangat atau quinoa sehat favorit keluarga. Selamat menikmati santapan buatan sendiri!',
       },
     ];
   }
 
-  List<RecipeReview> get _resolvedReviews {
-    if (widget.reviews.isNotEmpty) {
-      return widget.reviews;
-    }
-    return const [
-      RecipeReview(
-        userName: 'Siti Rahma',
-        rating: 5.0,
-        comment:
-            'Resepnya pas banget dan praktis buat makan siang keluarga! Tips: tambahin sedikit cabai rawit kalau suka pedas.',
-        date: '2 hari lalu',
-        isVerified: true,
-        helpfulCount: 24,
-      ),
-    ];
-  }
+  List<RecipeReview> get _resolvedReviews => widget.reviews;
 
   bool _isKnownMatch(String recipe, String user) {
     if (user.contains('ayam')) {
@@ -279,59 +241,6 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
         lower.contains('cuka');
   }
 
-  String _getIngredientNote(String name) {
-    final lower = name.toLowerCase();
-    if (lower.contains('dada ayam') || lower.contains('fillet')) {
-      return 'Potong dadu 2 cm rapi';
-    }
-    if (lower.contains('ayam')) {
-      return 'Potong dadu daging segar';
-    }
-    if (lower.contains('bawang putih')) {
-      return 'Cincang halus wangi aromatik';
-    }
-    if (lower.contains('daun bawang')) {
-      return 'Iris serong tebal renyah';
-    }
-    if (lower.contains('tomat')) {
-      return 'Potong 6 bagian wedges juicy';
-    }
-    if (lower.contains('kecap manis')) {
-      return 'Karamelisasi gurih manis alami';
-    }
-    if (lower.contains('kecap asin')) {
-      return 'Asin gurih umami';
-    }
-    if (lower.contains('minyak wijen')) {
-      return 'Aroma harum khas masakan asia';
-    }
-    if (lower.contains('merica') || lower.contains('garam')) {
-      return 'Penyeimbang rasa gurih seimbang';
-    }
-    if (lower.contains('wortel')) {
-      return 'Iris tipis bulat serasi';
-    }
-    if (lower.contains('brokoli')) {
-      return 'Potong perkuntum segar';
-    }
-    if (lower.contains('telur')) {
-      return 'Rebus matang sempurna';
-    }
-    if (lower.contains('tahu')) {
-      return 'Potong dadu lembut';
-    }
-    if (lower.contains('tempe')) {
-      return 'Iris tipis goreng gurih';
-    }
-    if (lower.contains('kangkung') || lower.contains('bayam')) {
-      return 'Petik daun segar dicuci bersih';
-    }
-    if (lower.contains('saus tiram')) {
-      return 'Saus kental gurih lezat';
-    }
-    return 'Bahan segar pilihan masakan';
-  }
-
   void _toggleBookmark() {
     BookmarkService.instance.toggleBookmark(
       SavedRecipe(
@@ -402,11 +311,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                 color: Color(0xFF084E38),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 20,
-              ),
+              child: const Icon(Icons.person, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -437,8 +342,8 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) =>
                   widget.imageAsset != null
-                      ? Image.asset(widget.imageAsset!, fit: BoxFit.cover)
-                      : Container(color: const Color(0xFF1E293B)),
+                  ? Image.asset(widget.imageAsset!, fit: BoxFit.cover)
+                  : Container(color: const Color(0xFF1E293B)),
             )
           else if (widget.imageAsset != null)
             Image.asset(widget.imageAsset!, fit: BoxFit.cover)
@@ -469,7 +374,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.90),
                         borderRadius: BorderRadius.circular(999),
@@ -486,7 +393,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: widget.isDiet
                             ? const Color(0xFF059669)
@@ -523,26 +432,26 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (widget.showReviews) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 16,
-                          color: Color(0xFFF59E0B),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${widget.rating} • ${widget.reviewCount} Ulasan',
-                          style: const TextStyle(
-                            fontFamily: AppTextStyles.fontFamily,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 16,
+                            color: Color(0xFFF59E0B),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${widget.rating} • ${widget.reviewCount} Ulasan',
+                            style: const TextStyle(
+                              fontFamily: AppTextStyles.fontFamily,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ],
                 ),
@@ -607,11 +516,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
               ],
             ),
           ),
-          Container(
-            width: 1,
-            height: 36,
-            color: const Color(0xFFF1F5F9),
-          ),
+          Container(width: 1, height: 36, color: const Color(0xFFF1F5F9)),
           Expanded(
             child: Column(
               children: [
@@ -678,11 +583,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
             children: [
               const Row(
                 children: [
-                  Icon(
-                    Icons.eco_rounded,
-                    size: 18,
-                    color: Color(0xFF059669),
-                  ),
+                  Icon(Icons.eco_rounded, size: 18, color: Color(0xFF059669)),
                   SizedBox(width: 6),
                   Text(
                     'Estimasi Nilai Gizi',
@@ -768,16 +669,18 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
               _buildNutritionMiniBox('Lemak', '${widget.fatGrams}g'),
               const SizedBox(width: 8),
               _buildNutritionMiniBox(
-                  'Berat',
-                  widget.weightPerPortionGrams == null
-                      ? '-'
-                      : '${widget.weightPerPortionGrams}g'),
+                'Berat',
+                widget.weightPerPortionGrams == null
+                    ? '-'
+                    : '${widget.weightPerPortionGrams}g',
+              ),
               const SizedBox(width: 8),
               _buildNutritionMiniBox(
-                  'Kkal/100g',
-                  widget.caloriesPer100g == null
-                      ? '-'
-                      : '${widget.caloriesPer100g}'),
+                'Kkal/100g',
+                widget.caloriesPer100g == null
+                    ? '-'
+                    : '${widget.caloriesPer100g}',
+              ),
             ],
           ),
         ],
@@ -821,7 +724,11 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
   }
 
   Widget _buildAvailabilitySummaryBanner(
-      int availableCount, int unavailableCount, int totalCount, int percent) {
+    int availableCount,
+    int unavailableCount,
+    int totalCount,
+    int percent,
+  ) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -896,8 +803,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
 
   Widget _buildIngredientsSection(int availableCount, int unavailableCount) {
     final ingredients = _resolvedIngredients;
-    final freshIngredients =
-        ingredients.where((i) => !_isSeasoning(i)).toList();
+    final freshIngredients = ingredients
+        .where((i) => !_isSeasoning(i))
+        .toList();
     final seasonings = ingredients.where((i) => _isSeasoning(i)).toList();
 
     return Column(
@@ -947,11 +855,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
         if (freshIngredients.isNotEmpty) ...[
           const Row(
             children: [
-              Icon(
-                Icons.eco_rounded,
-                size: 14,
-                color: Color(0xFF059669),
-              ),
+              Icon(Icons.eco_rounded, size: 14, color: Color(0xFF059669)),
               SizedBox(width: 6),
               Text(
                 'BAHAN SEGAR',
@@ -1000,8 +904,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
   Widget _buildIngredientItemRow(String ingredient) {
     final available = _isAvailable(ingredient);
     final quantity = widget.ingredientQuantities?[ingredient];
-    final note = quantity ??
-        (widget.ingredientQuantities != null ? '' : _getIngredientNote(ingredient));
+    final note = quantity ?? '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1044,8 +947,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 12,
-                      fontWeight:
-                          quantity != null ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: quantity != null
+                          ? FontWeight.w600
+                          : FontWeight.w400,
                       color: quantity != null
                           ? const Color(0xFF084E38)
                           : const Color(0xFF64748B),
@@ -1142,8 +1046,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment:
-                      hasTitle ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+                  crossAxisAlignment: hasTitle
+                      ? CrossAxisAlignment.center
+                      : CrossAxisAlignment.start,
                   children: [
                     Container(
                       width: 26,
@@ -1187,7 +1092,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                     if (tag != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFEEF2FF),
                           borderRadius: BorderRadius.circular(999),
@@ -1243,11 +1150,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
         const SizedBox(height: 2),
         Row(
           children: [
-            const Icon(
-              Icons.star_rounded,
-              size: 16,
-              color: Color(0xFFF59E0B),
-            ),
+            const Icon(Icons.star_rounded, size: 16, color: Color(0xFFF59E0B)),
             const SizedBox(width: 4),
             Text(
               '${widget.rating} / 5.0 • ${widget.reviewCount} ulasan',
@@ -1264,17 +1167,17 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
         ...List.generate(reviews.length, (index) {
           final review = reviews[index];
           final isHelpful = _helpfulReviews.contains(index);
-          final baseHelpful =
-              review.helpfulCount > 0 ? review.helpfulCount : 24;
-          final currentHelpful =
-              isHelpful ? baseHelpful + 1 : baseHelpful;
+          final baseHelpful = review.helpfulCount > 0
+              ? review.helpfulCount
+              : 24;
+          final currentHelpful = isHelpful ? baseHelpful + 1 : baseHelpful;
           final initial = review.userName.isNotEmpty
               ? review.userName
-                  .split(' ')
-                  .map((e) => e[0])
-                  .take(2)
-                  .join()
-                  .toUpperCase()
+                    .split(' ')
+                    .map((e) => e[0])
+                    .take(2)
+                    .join()
+                    .toUpperCase()
               : 'U';
 
           return Container(
@@ -1371,7 +1274,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 4),
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
                         child: Row(
                           children: [
                             Icon(
@@ -1444,9 +1349,7 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFF1F5F9), width: 1.2),
-        ),
+        border: Border(top: BorderSide(color: Color(0xFFF1F5F9), width: 1.2)),
       ),
       child: SafeArea(
         top: false,
@@ -1532,8 +1435,9 @@ class _DetailPanduanMasakPageState extends State<DetailPanduanMasakPage> {
     final totalCount = ingredients.length;
     final availableCount = ingredients.where((i) => _isAvailable(i)).length;
     final unavailableCount = totalCount - availableCount;
-    final percent =
-        totalCount > 0 ? ((availableCount / totalCount) * 100).round() : 0;
+    final percent = totalCount > 0
+        ? ((availableCount / totalCount) * 100).round()
+        : 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
