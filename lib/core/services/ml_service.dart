@@ -1,26 +1,9 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:http/http.dart' as http;
 
 import '../config/env.dart';
-import '../utils/nutrition.dart';
-
-class MlDietResult {
-  const MlDietResult({
-    required this.dietCategory,
-    required this.mealCalorieBudget,
-    required this.mealRatio,
-    required this.mlModel,
-    this.isLiveFromApi = true,
-  });
-
-  final String dietCategory;
-  final int mealCalorieBudget;
-  final double mealRatio;
-  final String mlModel;
-  final bool isLiveFromApi;
-}
 
 class MlCategoryResult {
   const MlCategoryResult({
@@ -35,6 +18,7 @@ class MlCategoryResult {
 }
 
 /// Service untuk menghubungkan aplikasi Flutter ke REST API Microservice Machine Learning (Python FastAPI).
+/// Backend ML hanya melayani klasifikasi kategori resep (/predict-category).
 class MlService {
   MlService({http.Client? client}) : _client = client ?? http.Client();
 
@@ -44,9 +28,9 @@ class MlService {
   /// 1. Prioritas utama: Nilai dari --dart-define=ML_API_URL
   /// 2. Jika di Android:
   ///    - http://127.0.0.1:8000 (bekerja langsung via USB dengan adb reverse)
-  ///    - http://192.168.1.6:8000 (IP Wi-Fi laptop saat ini)
   ///    - http://10.0.2.2:8000 (Android Emulator)
-  /// 3. Jika Windows / Web: http://127.0.0.1:8000
+  /// 3. Jika Windows / Web / Cloud:
+  ///    - https://pbl-smartcook.onrender.com
   static List<String> get candidateUrls {
     if (Env.mlApiUrl.isNotEmpty) {
       final u = Env.mlApiUrl.endsWith('/')
@@ -79,77 +63,7 @@ class MlService {
     return false;
   }
 
-  /// Modul 3: Prediksi Kategori Diet & Anggaran Kalori dari Model Decision Tree.
-  /// Jika API Python tidak terjangkau (offline), otomatis fallback ke model lokal di Dart.
-  Future<MlDietResult> predictDiet({
-    required double bmi,
-    required double tdee,
-    double? weightKg,
-    double? heightCm,
-    int? age,
-    String? gender,
-  }) async {
-    final skor = calculateBmiTdeeScore(bmi: bmi, tdee: tdee);
-
-    for (final base in candidateUrls) {
-      try {
-        final uri = Uri.parse('$base/predict-diet');
-        if (kDebugMode) {
-          print('[MlService] Mengirim request ke: $uri');
-        }
-        final res = await _client
-            .post(
-              uri,
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({
-                'bmi': bmi,
-                'tdee': tdee,
-                'skor_bmi_tdee': skor,
-                'weight_kg': weightKg,
-                'height_cm': heightCm,
-                'age': age,
-                'gender': gender ?? 'Pria',
-              }),
-            )
-            .timeout(const Duration(seconds: 15));
-
-        if (kDebugMode) {
-          print('[MlService] Status response: ${res.statusCode}');
-        }
-
-        if (res.statusCode == 200) {
-          final data = jsonDecode(res.body) as Map<String, dynamic>;
-          return MlDietResult(
-            dietCategory: data['diet_category'] as String,
-            mealCalorieBudget: (data['meal_calorie_budget'] as num).toInt(),
-            mealRatio: (data['meal_ratio'] as num).toDouble(),
-            mlModel: data['ml_model'] as String? ?? 'Decision Tree',
-            isLiveFromApi: true,
-          );
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print('[MlService] Gagal menghubungi $base: $e');
-        }
-        continue;
-      }
-    }
-
-    // Fallback ke model lokal jika backend server offline
-    final localCategory = predictDietCategory(bmi);
-    final localRatio = getDietMealRatio(localCategory);
-    final localBudget = (tdee * localRatio).round();
-
-    return MlDietResult(
-      dietCategory: localCategory,
-      mealCalorieBudget: localBudget,
-      mealRatio: localRatio,
-      mlModel: 'Decision Tree (Embedded Rules)',
-      isLiveFromApi: false,
-    );
-  }
-
-  /// Modul 2: Auto-tagging kategori protein resep menggunakan Logistic Regression.
+  /// Auto-tagging kategori protein resep baru menggunakan Logistic Regression.
   Future<MlCategoryResult?> predictCategory({
     required String title,
     required String ingredients,
@@ -160,10 +74,7 @@ class MlService {
             .post(
               Uri.parse('$base/predict-category'),
               headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({
-                'title': title,
-                'ingredients': ingredients,
-              }),
+              body: jsonEncode({'title': title, 'ingredients': ingredients}),
             )
             .timeout(const Duration(seconds: 15));
 
@@ -183,38 +94,5 @@ class MlService {
       }
     }
     return null;
-  }
-
-  /// Modul 1: Rekomendasi resep berbasis TF-IDF Cosine Similarity langsung dari Python ML.
-  Future<List<Map<String, dynamic>>> recommendFromMl({
-    required List<String> ingredients,
-    int limit = 10,
-  }) async {
-    for (final base in candidateUrls) {
-      try {
-        final res = await _client
-            .post(
-              Uri.parse('$base/recommend'),
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({
-                'ingredients': ingredients,
-                'limit': limit,
-              }),
-            )
-            .timeout(const Duration(seconds: 15));
-
-        if (res.statusCode == 200) {
-          final data = jsonDecode(res.body) as Map<String, dynamic>;
-          final list = (data['recipes'] as List?) ?? [];
-          return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print('[MlService] Gagal recommendFromMl pada $base: $e');
-        }
-        continue;
-      }
-    }
-    return [];
   }
 }
