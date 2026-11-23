@@ -15,6 +15,7 @@ class RecommendationCard extends StatelessWidget {
     this.durationMinutes = 15,
     this.stepsCount = 3,
     this.isDiet,
+    this.imageUrl,
     this.imageAsset,
     this.bookmarked = false,
     this.onBookmarkTap,
@@ -29,8 +30,10 @@ class RecommendationCard extends StatelessWidget {
   final int matchPercent;
   final int durationMinutes;
   final int stepsCount;
+
   /// Null = tidak diketahui, badge Diet/Non-Diet disembunyikan.
   final bool? isDiet;
+  final String? imageUrl;
   final String? imageAsset;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
@@ -58,18 +61,34 @@ class RecommendationCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(17),
+                ),
                 child: SizedBox(
                   height: 195,
                   width: double.infinity,
-                  child: imageAsset != null
-                      ? Image.asset(
-                          imageAsset!,
+                  child: (imageUrl != null && imageUrl!.isNotEmpty)
+                      ? Image.network(
+                          imageUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
-                              _buildImagePlaceholder(),
+                              imageAsset != null
+                              ? Image.asset(
+                                  imageAsset!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) =>
+                                      _buildImagePlaceholder(),
+                                )
+                              : _buildImagePlaceholder(),
                         )
-                      : _buildImagePlaceholder(),
+                      : (imageAsset != null
+                            ? Image.asset(
+                                imageAsset!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    _buildImagePlaceholder(),
+                              )
+                            : _buildImagePlaceholder()),
                 ),
               ),
               Positioned(
@@ -79,7 +98,10 @@ class RecommendationCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF094E38),
                         borderRadius: BorderRadius.circular(20),
@@ -113,41 +135,48 @@ class RecommendationCard extends StatelessWidget {
                       ),
                     ),
                     if (diet != null) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: diet ? const Color(0xFF059669) : const Color(0xFFD97706),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            diet ? Icons.eco_rounded : Icons.restaurant_menu_rounded,
-                            size: 13,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            diet ? 'Diet Sehat' : 'Non-Diet',
-                            style: const TextStyle(
-                              fontFamily: AppTextStyles.fontFamily,
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: diet
+                              ? const Color(0xFF059669)
+                              : const Color(0xFFD97706),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              diet
+                                  ? Icons.eco_rounded
+                                  : Icons.restaurant_menu_rounded,
+                              size: 13,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              diet ? 'Diet Sehat' : 'Non-Diet',
+                              style: const TextStyle(
+                                fontFamily: AppTextStyles.fontFamily,
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     ],
                   ],
                 ),
@@ -174,9 +203,13 @@ class RecommendationCard extends StatelessWidget {
                     ),
                     child: Center(
                       child: Icon(
-                        bookmarked ? Icons.bookmark : Icons.bookmark_border_rounded,
+                        bookmarked
+                            ? Icons.bookmark
+                            : Icons.bookmark_border_rounded,
                         size: 19,
-                        color: bookmarked ? AppColors.primary : const Color(0xFF334155),
+                        color: bookmarked
+                            ? AppColors.primary
+                            : const Color(0xFF334155),
                       ),
                     ),
                   ),
@@ -187,7 +220,10 @@ class RecommendationCard extends StatelessWidget {
                 bottom: 12,
                 right: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -293,7 +329,10 @@ class RecommendationCard extends StatelessWidget {
                         backgroundColor: const Color(0xFF084E38),
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
@@ -311,7 +350,11 @@ class RecommendationCard extends StatelessWidget {
                             ),
                           ),
                           SizedBox(width: 6),
-                          Icon(Icons.arrow_forward_rounded, size: 15, color: Colors.white),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 15,
+                            color: Colors.white,
+                          ),
                         ],
                       ),
                     ),

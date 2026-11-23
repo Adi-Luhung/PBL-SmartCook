@@ -17,8 +17,11 @@ class MissingConfigPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.settings_outlined,
-                  size: 40, color: AppColors.primary),
+              const Icon(
+                Icons.settings_outlined,
+                size: 40,
+                color: AppColors.primary,
+              ),
               const SizedBox(height: 16),
               Text('Supabase belum dikonfigurasi', style: AppTextStyles.h1),
               const SizedBox(height: 8),

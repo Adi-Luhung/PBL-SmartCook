@@ -99,14 +99,22 @@ class _RegisterFormState extends State<RegisterForm> {
     final email = _email.text.trim();
     final password = _password.text;
 
-    if (username.isEmpty || email.isEmpty || password.isEmpty || _confirm.text.isEmpty) {
+    if (username.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        _confirm.text.isEmpty) {
       setState(() => _error = 'Semua kolom wajib diisi.');
       return;
     }
 
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     if (!emailRegex.hasMatch(email)) {
-      setState(() => _error = 'Format alamat email tidak valid (contoh: nama@email.com).');
+      setState(
+        () => _error =
+            'Format alamat email tidak valid (contoh: nama@email.com).',
+      );
       return;
     }
 
@@ -114,8 +122,12 @@ class _RegisterFormState extends State<RegisterForm> {
       setState(() => _error = 'Kata sandi minimal 6 karakter.');
       return;
     }
-    if (!RegExp(r'[A-Z]').hasMatch(password) || !RegExp(r'[0-9]').hasMatch(password)) {
-      setState(() => _error = 'Kata sandi harus mengandung kombinasi huruf besar dan angka.');
+    if (!RegExp(r'[A-Z]').hasMatch(password) ||
+        !RegExp(r'[0-9]').hasMatch(password)) {
+      setState(
+        () => _error =
+            'Kata sandi harus mengandung kombinasi huruf besar dan angka.',
+      );
       return;
     }
     if (password != _confirm.text) {
@@ -150,7 +162,9 @@ class _RegisterFormState extends State<RegisterForm> {
       if (mounted) setState(() => _error = _translate(e.message));
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Tidak dapat terhubung. Periksa koneksi internet.');
+        setState(
+          () => _error = 'Tidak dapat terhubung. Periksa koneksi internet.',
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -309,7 +323,11 @@ class _RegisterFormState extends State<RegisterForm> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.error_outline, size: 18, color: AppColors.danger),
+                const Icon(
+                  Icons.error_outline,
+                  size: 18,
+                  color: AppColors.danger,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -343,7 +361,8 @@ class _RegisterFormState extends State<RegisterForm> {
             onPressed: _loading ? null : _submit,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF084E38),
-              disabledBackgroundColor: const Color(0xFF084E38).withValues(alpha: 0.6),
+              disabledBackgroundColor: const Color(0xFF084E38)
+                  .withValues(alpha: 0.6),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -372,9 +391,7 @@ class _RegisterFormState extends State<RegisterForm> {
         const SizedBox(height: 20),
         Row(
           children: const [
-            Expanded(
-              child: Divider(color: Color(0xFFE2E8F0), thickness: 1),
-            ),
+            Expanded(child: Divider(color: Color(0xFFE2E8F0), thickness: 1)),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),
               child: Text(
@@ -387,9 +404,7 @@ class _RegisterFormState extends State<RegisterForm> {
                 ),
               ),
             ),
-            Expanded(
-              child: Divider(color: Color(0xFFE2E8F0), thickness: 1),
-            ),
+            Expanded(child: Divider(color: Color(0xFFE2E8F0), thickness: 1)),
           ],
         ),
         const SizedBox(height: 18),

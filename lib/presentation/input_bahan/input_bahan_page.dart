@@ -15,12 +15,14 @@ class _IngredientItem {
     required this.assetPath,
     required this.icon,
     this.isDiet = true,
+    this.imageUrl,
   });
 
   final String name;
   final String assetPath;
   final IconData icon;
   final bool isDiet;
+  final String? imageUrl;
 }
 
 class _CategoryGroup {
@@ -128,7 +130,6 @@ const _allCategories = [
   ),
 ];
 
-
 // ── Katalog dari database ───────────────────────────────────────────────────
 
 const _categoryOrder = [
@@ -196,12 +197,16 @@ List<_CategoryGroup> _groupsFrom(List<CatalogIngredient> catalog) {
   final byCategory = <String, List<_IngredientItem>>{};
   for (final i in catalog) {
     final asset = _knownAssets[i.name];
-    byCategory.putIfAbsent(i.category, () => []).add(
+    byCategory
+        .putIfAbsent(i.category, () => [])
+        .add(
           _IngredientItem(
             name: titleCase(i.name),
-            assetPath: 'assets/images/ingredients/${asset ?? '${i.name.replaceAll(' ', '_')}.jpg'}',
+            assetPath:
+                'assets/images/ingredients/${asset ?? '${i.name.replaceAll(' ', '_')}.jpg'}',
             icon: _categoryIcons[i.category] ?? Icons.restaurant_outlined,
             isDiet: _dietCategories.contains(i.category),
+            imageUrl: i.imageUrl,
           ),
         );
   }
@@ -245,9 +250,7 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
   String _searchQuery = '';
 
   bool _isBahanTerpilihExpanded = true;
-  final Map<String, bool> _expandedCategories = {
-    'Protein & Lauk': true,
-  };
+  final Map<String, bool> _expandedCategories = {'Protein & Lauk': true};
 
   @override
   void initState() {
@@ -295,11 +298,13 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
   void _snack(String message, {bool error = false}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(message),
-        backgroundColor: error ? AppColors.danger : AppColors.primary,
-        duration: const Duration(seconds: 2),
-      ));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: error ? AppColors.danger : AppColors.primary,
+          duration: const Duration(seconds: 2),
+        ),
+      );
   }
 
   /// Enter di kolom pencarian: cocokkan teks (termasuk sinonim/typo) ke bahan
@@ -336,18 +341,23 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
     setState(() => _searching = true);
     try {
       final names = _selected.toList();
-      final hits =
-          await ref.read(recipeRepositoryProvider).resolveIngredients(names);
+      final hits = await ref
+          .read(recipeRepositoryProvider)
+          .resolveIngredients(names);
       if (!mounted) return;
       if (hits.isEmpty) {
         _snack('Bahan yang dipilih belum dikenali.', error: true);
         return;
       }
-      ref.read(searchQueryProvider.notifier).set(SearchQuery(
-            names: names,
-            ids: hits.map((h) => h.id).toList(),
-            canonical: hits.map((h) => h.name).toList(),
-          ));
+      ref
+          .read(searchQueryProvider.notifier)
+          .set(
+            SearchQuery(
+              names: names,
+              ids: hits.map((h) => h.id).toList(),
+              canonical: hits.map((h) => h.name).toList(),
+            ),
+          );
       if (widget.onSearchRecipesWithIngredients != null) {
         widget.onSearchRecipesWithIngredients!(names);
       } else {
@@ -386,7 +396,10 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 children: [
                   // 1. Header (Logo SmartCook di kanan atas)
                   _buildHeader(),
@@ -407,7 +420,9 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
                   ],
 
                   // 5. Category Filter Chips (Horizontal)
-                  _buildCategoryFilterRow(allCategories.map((c) => c.title).toList()),
+                  _buildCategoryFilterRow(
+                    allCategories.map((c) => c.title).toList(),
+                  ),
                   const SizedBox(height: 16),
 
                   if (catalog.isLoading)
@@ -417,7 +432,9 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
                     ),
 
                   // 6. Accordion per Kategori
-                  ...displayedCategories.map((category) => _buildCategorySection(category)),
+                  ...displayedCategories.map(
+                    (category) => _buildCategorySection(category),
+                  ),
 
                   const SizedBox(height: 16),
                 ],
@@ -517,15 +534,26 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
             fontSize: 13.5,
             color: Color(0xFF9CA3AF),
           ),
-          prefixIcon: const Icon(Icons.search, size: 22, color: Color(0xFF9CA3AF)),
+          prefixIcon: const Icon(
+            Icons.search,
+            size: 22,
+            color: Color(0xFF9CA3AF),
+          ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.close, size: 18, color: Color(0xFF9CA3AF)),
+                  icon: const Icon(
+                    Icons.close,
+                    size: 18,
+                    color: Color(0xFF9CA3AF),
+                  ),
                   onPressed: () => _searchController.clear(),
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
         ),
       ),
     );
@@ -593,7 +621,9 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
             fontFamily: AppTextStyles.fontFamily,
             fontSize: 13.5,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? const Color(0xFF0E6E4E) : const Color(0xFF64748B),
+            color: isSelected
+                ? const Color(0xFF0E6E4E)
+                : const Color(0xFF64748B),
           ),
         ),
       ),
@@ -614,7 +644,8 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
           // Header Card
           InkWell(
             onTap: () => setState(
-                () => _isBahanTerpilihExpanded = !_isBahanTerpilihExpanded),
+              () => _isBahanTerpilihExpanded = !_isBahanTerpilihExpanded,
+            ),
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -632,7 +663,10 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFD1FAE5),
                       borderRadius: BorderRadius.circular(999),
@@ -669,8 +703,12 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
                 runSpacing: 8,
                 children: _selected.map((item) {
                   return Container(
-                    padding:
-                        const EdgeInsets.only(left: 12, right: 6, top: 6, bottom: 6),
+                    padding: const EdgeInsets.only(
+                      left: 12,
+                      right: 6,
+                      top: 6,
+                      bottom: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(999),
@@ -728,8 +766,11 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.delete_outline,
-                            size: 16, color: Color(0xFF6B7280)),
+                        Icon(
+                          Icons.delete_outline,
+                          size: 16,
+                          color: Color(0xFF6B7280),
+                        ),
                         SizedBox(width: 4),
                         Text(
                           'Hapus Semua',
@@ -767,8 +808,10 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
               onTap: () => setState(() => _activeCategoryFilter = cat),
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF111827) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -813,7 +856,8 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
 
     // Saat mencari, semua kategori yang punya hasil otomatis terbuka.
     final isExpanded =
-        _searchQuery.isNotEmpty || (_expandedCategories[category.title] ?? false);
+        _searchQuery.isNotEmpty ||
+        (_expandedCategories[category.title] ?? false);
     final selectedInCat = category.items
         .where((item) => _selected.contains(item.name))
         .length;
@@ -863,8 +907,10 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
                   const SizedBox(width: 8),
                   // Badge jumlah bahan / dipilih
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: selectedInCat > 0
                           ? const Color(0xFFD1FAE5)
@@ -974,22 +1020,43 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
                   SizedBox(
                     height: 105,
                     width: double.infinity,
-                    child: Image.asset(
-                      item.assetPath,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: const Color(0xFFF3F4F6),
-                          child: Center(
-                            child: Icon(
-                              item.icon,
-                              size: 40,
-                              color: const Color(0xFF9CA3AF),
-                            ),
+                    child: (item.imageUrl != null && item.imageUrl!.isNotEmpty)
+                        ? Image.network(
+                            item.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Image.asset(
+                                  item.assetPath,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        color: const Color(0xFFF3F4F6),
+                                        child: Center(
+                                          child: Icon(
+                                            item.icon,
+                                            size: 40,
+                                            color: const Color(0xFF9CA3AF),
+                                          ),
+                                        ),
+                                      ),
+                                ),
+                          )
+                        : Image.asset(
+                            item.assetPath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: const Color(0xFFF3F4F6),
+                                child: Center(
+                                  child: Icon(
+                                    item.icon,
+                                    size: 40,
+                                    color: const Color(0xFF9CA3AF),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
                   ),
 
                   // Checkmark / Indicator di pojok kanan atas
@@ -1029,7 +1096,10 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
               // Bagian Label Nama Bahan
               Container(
                 color: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
                 child: Text(
                   item.name,
                   maxLines: 1,
@@ -1097,7 +1167,10 @@ class _InputBahanPageState extends ConsumerState<InputBahanPage> {
               ? const SizedBox(
                   height: 20,
                   width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Text(
                   'Cari Resep',

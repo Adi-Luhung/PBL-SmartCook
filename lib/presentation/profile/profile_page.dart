@@ -36,7 +36,8 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(authStateProvider).value?.session ??
+    final session =
+        ref.watch(authStateProvider).value?.session ??
         ref.watch(supabaseProvider).auth.currentSession;
     if (session == null) {
       return const AuthPage(initialIsLogin: true);
@@ -46,7 +47,10 @@ class ProfilePage extends ConsumerWidget {
     final email = ref.watch(supabaseProvider).auth.currentUser?.email;
 
     return ListenableBuilder(
-      listenable: Listenable.merge([BookmarkService.instance, CookDocService.instance]),
+      listenable: Listenable.merge([
+        BookmarkService.instance,
+        CookDocService.instance,
+      ]),
       builder: (context, _) {
         final savedCount = BookmarkService.instance.savedRecipes.length;
         final cookCount = CookDocService.instance.items.length;
@@ -61,12 +65,18 @@ class ProfilePage extends ConsumerWidget {
                 Row(
                   children: [
                     Expanded(
-                        child: _StatPill(
-                            label: 'Masakan Dibuat', value: '$cookCount')),
+                      child: _StatPill(
+                        label: 'Masakan Dibuat',
+                        value: '$cookCount',
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
-                        child: _StatPill(
-                            label: 'Resep Disimpan', value: '$savedCount')),
+                      child: _StatPill(
+                        label: 'Resep Disimpan',
+                        value: '$savedCount',
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -169,8 +179,10 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Hapus',
-                style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Hapus',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -186,7 +198,8 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
   }
 
   void _showPhotoOptions() {
-    final hasPhoto = ProfilePhotoService.instance.photoPath != null &&
+    final hasPhoto =
+        ProfilePhotoService.instance.photoPath != null &&
         File(ProfilePhotoService.instance.photoPath!).existsSync();
     showModalBottomSheet(
       context: context,
@@ -232,16 +245,24 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.photo_library_outlined,
-                      color: AppColors.primary, size: 22),
+                  child: const Icon(
+                    Icons.photo_library_outlined,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
                 ),
-                title: const Text('Unggah dari Galeri',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A))),
-                subtitle: const Text('Pilih foto dari galeri HP kamu',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                title: const Text(
+                  'Unggah dari Galeri',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                subtitle: const Text(
+                  'Pilih foto dari galeri HP kamu',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _pickPhoto();
@@ -258,16 +279,24 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
                       color: Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.delete_outline_rounded,
-                        color: Colors.red, size: 22),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.red,
+                      size: 22,
+                    ),
                   ),
-                  title: const Text('Hapus Foto Profil',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red)),
-                  subtitle: const Text('Foto akan dihapus secara permanen',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  title: const Text(
+                    'Hapus Foto Profil',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Foto akan dihapus secara permanen',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
                   onTap: () {
                     Navigator.of(ctx).pop();
                     _deletePhoto();
@@ -299,8 +328,9 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
                   CircleAvatar(
                     radius: 44,
                     backgroundColor: AppColors.border,
-                    backgroundImage:
-                        hasPhoto ? FileImage(File(photoPath)) : null,
+                    backgroundImage: hasPhoto
+                        ? FileImage(File(photoPath))
+                        : null,
                     child: hasPhoto
                         ? null
                         : const Icon(
@@ -363,7 +393,8 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
                 children: [
                   if (widget.profile?.gender != null)
                     _InfoPill(label: widget.profile!.gender!),
-                  if (widget.profile?.gender != null && widget.profile?.age != null)
+                  if (widget.profile?.gender != null &&
+                      widget.profile?.age != null)
                     const SizedBox(width: 10),
                   if (widget.profile?.age != null)
                     _InfoPill(label: '${widget.profile!.age} Tahun'),
@@ -415,8 +446,10 @@ class _StatPill extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value,
-              style: AppTextStyles.h2.copyWith(color: AppColors.primary)),
+          Text(
+            value,
+            style: AppTextStyles.h2.copyWith(color: AppColors.primary),
+          ),
           const SizedBox(width: 6),
           Text(label, style: AppTextStyles.caption),
         ],
@@ -454,15 +487,21 @@ class _HealthCard extends ConsumerWidget {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.shield_outlined,
-                    color: Colors.white, size: 18),
+                child: const Icon(
+                  Icons.shield_outlined,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Kesehatan & Kalori', style: AppTextStyles.label),
+                    const Text(
+                      'Kesehatan & Kalori',
+                      style: AppTextStyles.label,
+                    ),
                     Text(_bodyLine(profile), style: AppTextStyles.bodyMuted),
                   ],
                 ),
@@ -470,9 +509,7 @@ class _HealthCard extends ConsumerWidget {
               OutlinedButton.icon(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const EditProfilePage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const EditProfilePage()),
                   );
                 },
                 icon: const Icon(Icons.edit_outlined, size: 14),
@@ -480,12 +517,17 @@ class _HealthCard extends ConsumerWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: const BorderSide(color: AppColors.primary),
-                  textStyle:
-                      const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
             ],
@@ -505,22 +547,28 @@ class _HealthCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Indeks Massa Tubuh',
-                          style: AppTextStyles.bodyMuted),
+                      const Text(
+                        'Indeks Massa Tubuh',
+                        style: AppTextStyles.bodyMuted,
+                      ),
                       const SizedBox(height: 4),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
-                            profile?.bmi == null ? '-' : profile!.bmi!.toStringAsFixed(1),
+                            profile?.bmi == null
+                                ? '-'
+                                : profile!.bmi!.toStringAsFixed(1),
                             style: AppTextStyles.h1.copyWith(fontSize: 28),
                           ),
                           const SizedBox(width: 6),
                           if (profile?.bmiLabel != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: profile!.bmiLabel == 'Ideal'
                                     ? const Color(0xFFDCFCE7)
@@ -547,17 +595,33 @@ class _HealthCard extends ConsumerWidget {
                         child: Row(
                           children: [
                             Expanded(
-                                flex: 2,
-                                child: Container(height: 6, color: const Color(0xFF60A5FA))),
+                              flex: 2,
+                              child: Container(
+                                height: 6,
+                                color: const Color(0xFF60A5FA),
+                              ),
+                            ),
                             Expanded(
-                                flex: 3,
-                                child: Container(height: 6, color: const Color(0xFF4ADE80))),
+                              flex: 3,
+                              child: Container(
+                                height: 6,
+                                color: const Color(0xFF4ADE80),
+                              ),
+                            ),
                             Expanded(
-                                flex: 2,
-                                child: Container(height: 6, color: const Color(0xFFFBBF24))),
+                              flex: 2,
+                              child: Container(
+                                height: 6,
+                                color: const Color(0xFFFBBF24),
+                              ),
+                            ),
                             Expanded(
-                                flex: 2,
-                                child: Container(height: 6, color: const Color(0xFFF87171))),
+                              flex: 2,
+                              child: Container(
+                                height: 6,
+                                color: const Color(0xFFF87171),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -576,16 +640,18 @@ class _HealthCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Target Kalori Harian',
-                          style: AppTextStyles.bodyMuted),
+                      const Text(
+                        'Kebutuhan Kalori (TDEE)',
+                        style: AppTextStyles.bodyMuted,
+                      ),
                       const SizedBox(height: 4),
                       RichText(
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: profile?.targetKkal == null
+                              text: profile?.tdee == null
                                   ? '-'
-                                  : _formatKkal(profile!.targetKkal!),
+                                  : _formatKkal(profile!.tdee!.round()),
                               style: AppTextStyles.h1.copyWith(fontSize: 28),
                             ),
                             const TextSpan(
@@ -606,84 +672,33 @@ class _HealthCard extends ConsumerWidget {
           ),
           if (profile?.dietCategory != null) ...[
             const SizedBox(height: 12),
-            ref.watch(mlDietPredictionProvider).when(
-              data: (mlResult) {
-                final isLive = mlResult?.isLiveFromApi ?? false;
-                final category = mlResult?.dietCategory ?? profile!.dietCategory!;
-                final budget = mlResult?.mealCalorieBudget ?? profile!.mealCalorieBudget ?? 600;
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isLive ? const Color(0xFFEFF6FF) : const Color(0xFFF0FDF4),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isLive ? const Color(0xFFBFDBFE) : const Color(0xFFBBF7D0),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.restaurant_menu_outlined,
+                    size: 18,
+                    color: Color(0xFF059669),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Pola Diet: ${profile!.dietCategory} (Batas: ${profile!.mealCalorieBudget ?? 600} kkal/makan)',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF065F46),
+                      ),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isLive ? Icons.cloud_done_outlined : Icons.psychology_outlined,
-                        size: 18,
-                        color: isLive ? const Color(0xFF2563EB) : const Color(0xFF059669),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Pola Diet ML: $category (Batas: $budget kkal/makan)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isLive ? const Color(0xFF1E40AF) : const Color(0xFF065F46),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isLive ? const Color(0xFFDBEAFE) : const Color(0xFFDCFCE7),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          isLive ? 'API LIVE' : 'EMBEDDED',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isLive ? const Color(0xFF1D4ED8) : const Color(0xFF15803D),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, _) => Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFBBF7D0)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.psychology_outlined,
-                        size: 18, color: Color(0xFF059669)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Pola Diet ML: ${profile!.dietCategory!} (Batas: ${profile!.mealCalorieBudget ?? 600} kkal/makan)',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF065F46),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
             ),
           ],
@@ -694,7 +709,9 @@ class _HealthCard extends ConsumerWidget {
 
   /// 1829 -> "1.829"
   static String _formatKkal(int n) => n.toString().replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (m) => '.',
+  );
 
   static String _bodyLine(UserProfile? p) {
     if (p == null || p.weightKg == null || p.heightCm == null) {
@@ -726,15 +743,17 @@ class _SavedRecipesSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.bookmark_outline,
-                color: AppColors.textPrimary, size: 18),
+            const Icon(
+              Icons.bookmark_outline,
+              color: AppColors.textPrimary,
+              size: 18,
+            ),
             const SizedBox(width: 6),
             const Expanded(
               child: Text('Resep Disimpan', style: AppTextStyles.label),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(20),
@@ -775,10 +794,12 @@ class _SavedRecipesSection extends StatelessWidget {
                   children: recipes
                       .asMap()
                       .entries
-                      .map((e) => _SavedRecipeItem(
-                            recipe: e.value,
-                            showDivider: e.key < recipes.length - 1,
-                          ))
+                      .map(
+                        (e) => _SavedRecipeItem(
+                          recipe: e.value,
+                          showDivider: e.key < recipes.length - 1,
+                        ),
+                      )
                       .toList(),
                 ),
         ),
@@ -788,10 +809,7 @@ class _SavedRecipesSection extends StatelessWidget {
 }
 
 class _SavedRecipeItem extends StatelessWidget {
-  const _SavedRecipeItem({
-    required this.recipe,
-    required this.showDivider,
-  });
+  const _SavedRecipeItem({required this.recipe, required this.showDivider});
 
   final SavedRecipe recipe;
   final bool showDivider;
@@ -837,26 +855,30 @@ class _SavedRecipeItem extends StatelessWidget {
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 recipe.imageAsset != null
-                                    ? Image.asset(
-                                        recipe.imageAsset!,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Container(
-                                        color: const Color(0xFFE8EEFB),
-                                        child: const Icon(Icons.restaurant,
-                                            color: AppColors.textMuted),
-                                      ),
+                                ? Image.asset(
+                                    recipe.imageAsset!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Container(
+                                    color: const Color(0xFFE8EEFB),
+                                    child: const Icon(
+                                      Icons.restaurant,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
                           )
                         : (recipe.imageAsset != null
-                            ? Image.asset(
-                                recipe.imageAsset!,
-                                fit: BoxFit.cover,
-                              )
-                            : Container(
-                                color: const Color(0xFFE8EEFB),
-                                child: const Icon(Icons.restaurant,
-                                    color: AppColors.textMuted),
-                              )),
+                              ? Image.asset(
+                                  recipe.imageAsset!,
+                                  fit: BoxFit.cover,
+                                )
+                              : Container(
+                                  color: const Color(0xFFE8EEFB),
+                                  child: const Icon(
+                                    Icons.restaurant,
+                                    color: AppColors.textMuted,
+                                  ),
+                                )),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -868,11 +890,16 @@ class _SavedRecipeItem extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.access_time,
-                              size: 13, color: AppColors.textMuted),
+                          const Icon(
+                            Icons.access_time,
+                            size: 13,
+                            color: AppColors.textMuted,
+                          ),
                           const SizedBox(width: 4),
-                          Text('${recipe.time} • ${recipe.ingredients}',
-                              style: AppTextStyles.caption),
+                          Text(
+                            '${recipe.time} • ${recipe.ingredients}',
+                            style: AppTextStyles.caption,
+                          ),
                         ],
                       ),
                     ],
@@ -907,8 +934,11 @@ class _CookDocSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.camera_alt_outlined,
-                    color: AppColors.textPrimary, size: 18),
+                const Icon(
+                  Icons.camera_alt_outlined,
+                  color: AppColors.textPrimary,
+                  size: 18,
+                ),
                 const SizedBox(width: 6),
                 const Expanded(
                   child: Text('Dokumentasi Masak', style: AppTextStyles.label),
@@ -951,12 +981,14 @@ class _CookDocSection extends StatelessWidget {
                 crossAxisSpacing: 10,
                 childAspectRatio: 1.2,
                 children: docs
-                    .map((p) => _PhotoCard(
-                          name: p.name,
-                          time: p.time,
-                          photoPath: p.photoPath,
-                          imageUrl: p.imageUrl,
-                        ))
+                    .map(
+                      (p) => _PhotoCard(
+                        name: p.name,
+                        time: p.time,
+                        photoPath: p.photoPath,
+                        imageUrl: p.imageUrl,
+                      ),
+                    )
                     .toList(),
               ),
           ],
@@ -982,7 +1014,16 @@ class _PhotoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasLocal = photoPath != null && File(photoPath!).existsSync();
-    const placeholder = ColoredBox(color: Color(0xFFB0B8C1));
+    const placeholder = ColoredBox(
+      color: Color(0xFFE2E8F0),
+      child: Center(
+        child: Icon(
+          Icons.restaurant_rounded,
+          color: Color(0xFF94A3B8),
+          size: 36,
+        ),
+      ),
+    );
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
@@ -991,11 +1032,11 @@ class _PhotoCard extends StatelessWidget {
         children: [
           if (hasLocal)
             Image.file(File(photoPath!), fit: BoxFit.cover)
-          else if (imageUrl != null)
+          else if (imageUrl != null && imageUrl!.isNotEmpty)
             Image.network(
               imageUrl!,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => placeholder,
+              errorBuilder: (_, _, _) => placeholder,
             )
           else
             placeholder,
@@ -1060,10 +1101,10 @@ class _LogoutButton extends StatelessWidget {
           side: const BorderSide(color: Color(0xFFFFD7D7)),
           backgroundColor: const Color(0xFFFFF5F5),
           padding: const EdgeInsets.symmetric(vertical: 14),
-          textStyle:
-              const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );

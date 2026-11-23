@@ -19,9 +19,7 @@ class ConfirmSearchDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       elevation: 6,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -59,10 +57,7 @@ class ConfirmSearchDialog extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Center(
-                child: _CookingPanIcon(
-                  size: 34,
-                  color: Color(0xFF084E38),
-                ),
+                child: _CookingPanIcon(size: 34, color: Color(0xFF084E38)),
               ),
             ),
             const SizedBox(height: 16),
@@ -187,9 +182,7 @@ class _CookingPanIcon extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _CookingPanPainter(color),
-      ),
+      child: CustomPaint(painter: _CookingPanPainter(color)),
     );
   }
 }

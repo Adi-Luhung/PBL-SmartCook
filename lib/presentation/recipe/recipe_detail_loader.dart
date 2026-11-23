@@ -39,7 +39,8 @@ class RecipeDetailLoader extends ConsumerWidget {
                 AppButton(
                   label: 'Coba Lagi',
                   fullWidth: false,
-                  onPressed: () => ref.invalidate(recipeDetailProvider(recipeId)),
+                  onPressed: () =>
+                      ref.invalidate(recipeDetailProvider(recipeId)),
                 ),
               ],
             ),
@@ -52,10 +53,11 @@ class RecipeDetailLoader extends ConsumerWidget {
             ref.watch(recipeReviewsProvider(recipeId)).value ?? const [];
         final rating = reviews.isNotEmpty
             ? (reviews.map((e) => e.rating).reduce((a, b) => a + b) /
-                reviews.length)
+                  reviews.length)
             : 5.0;
         return DetailResepPage(
           title: r.title,
+          imageUrl: r.imageUrl,
           calories: calories,
           portions: estimatePortions(r.beratG),
           isDiet: isDietPortion(calories, budget) ?? false,
@@ -96,10 +98,10 @@ class _NutritionCard extends StatelessWidget {
 
   final RecipeDetail detail;
 
-  static String _n(double v) => v
-      .round()
-      .toString()
-      .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+  static String _n(double v) => v.round().toString().replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (m) => '.',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -108,15 +110,17 @@ class _NutritionCard extends StatelessWidget {
     final portions = estimatePortions(berat);
 
     Widget tile(String value, String label) => Expanded(
-          child: Column(
-            children: [
-              Text(value,
-                  style: AppTextStyles.h2.copyWith(color: AppColors.primaryDark)),
-              const SizedBox(height: 2),
-              Text(label, style: AppTextStyles.caption),
-            ],
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: AppTextStyles.h2.copyWith(color: AppColors.primaryDark),
           ),
-        );
+          const SizedBox(height: 2),
+          Text(label, style: AppTextStyles.caption),
+        ],
+      ),
+    );
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -135,9 +139,12 @@ class _NutritionCard extends StatelessWidget {
           Row(
             children: [
               tile(_n(kalori), 'kkal'),
-              if (detail.proteinG != null) tile('${_n(detail.proteinG!)} g', 'protein'),
-              if (detail.lemakG != null) tile('${_n(detail.lemakG!)} g', 'lemak'),
-              if (detail.karboG != null) tile('${_n(detail.karboG!)} g', 'karbo'),
+              if (detail.proteinG != null)
+                tile('${_n(detail.proteinG!)} g', 'protein'),
+              if (detail.lemakG != null)
+                tile('${_n(detail.lemakG!)} g', 'lemak'),
+              if (detail.karboG != null)
+                tile('${_n(detail.karboG!)} g', 'karbo'),
             ],
           ),
           const SizedBox(height: 10),

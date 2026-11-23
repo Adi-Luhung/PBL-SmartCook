@@ -142,10 +142,7 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1.2,
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: const [
           BoxShadow(
             color: Color(0x060F172A),
@@ -169,7 +166,9 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton>
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF084E38)),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF084E38),
+                          ),
                         ),
                       ),
                       SizedBox(width: 12),

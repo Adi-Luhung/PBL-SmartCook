@@ -100,22 +100,26 @@ class BerandaPage extends ConsumerWidget {
     if (matches.isNotEmpty) {
       items = matches
           .take(5)
-          .map((r) => _HomeItem(
-                summary: r.toSummary(),
-                subtitle:
-                    'Cocok untuk ${r.matchedNames.take(3).map(titleCase).join(', ')}',
-                calories: caloriesPerPortion(r.kalori, r.beratG),
-              ))
+          .map(
+            (r) => _HomeItem(
+              summary: r.toSummary(),
+              subtitle:
+                  'Cocok untuk ${r.matchedNames.take(3).map(titleCase).join(', ')}',
+              calories: caloriesPerPortion(r.kalori, r.beratG),
+            ),
+          )
           .toList();
     } else {
       items = (featured.value ?? const <RecipeSummary>[])
-          .map((r) => _HomeItem(
-                summary: r,
-                subtitle: r.category == null
-                    ? '${r.totalIngredients} bahan'
-                    : 'Kategori ${titleCase(r.category!)}',
-                calories: caloriesPerPortion(r.kalori, r.beratG),
-              ))
+          .map(
+            (r) => _HomeItem(
+              summary: r,
+              subtitle: r.category == null
+                  ? '${r.totalIngredients} bahan'
+                  : 'Kategori ${titleCase(r.category!)}',
+              calories: caloriesPerPortion(r.kalori, r.beratG),
+            ),
+          )
           .toList();
     }
 
@@ -144,7 +148,10 @@ class BerandaPage extends ConsumerWidget {
                     Row(
                       children: [
                         const Expanded(
-                          child: Text('Rekomendasi Masakan', style: AppTextStyles.h2),
+                          child: Text(
+                            'Rekomendasi Masakan',
+                            style: AppTextStyles.h2,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         GestureDetector(
@@ -153,11 +160,15 @@ class BerandaPage extends ConsumerWidget {
                             children: [
                               Text(
                                 'Lihat Semua',
-                                style: AppTextStyles.label
-                                    .copyWith(color: AppColors.primary),
+                                style: AppTextStyles.label.copyWith(
+                                  color: AppColors.primary,
+                                ),
                               ),
-                              const Icon(Icons.chevron_right,
-                                  size: 16, color: AppColors.primary),
+                              const Icon(
+                                Icons.chevron_right,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
                             ],
                           ),
                         ),
@@ -186,11 +197,13 @@ class BerandaPage extends ConsumerWidget {
                             title: item.summary.title,
                             subtitle: item.subtitle,
                             calories: item.calories,
+                            imageUrl: item.summary.imageUrl,
                             bookmarked: BookmarkService.instance
                                 .isRecipeBookmarked(item.summary.id),
                             onBookmarkTap: () =>
                                 toggleRecipeBookmark(context, item.summary),
-                            onTap: () => _openRecipeDetail(context, item.summary.id),
+                            onTap: () =>
+                                _openRecipeDetail(context, item.summary.id),
                           ),
                         ),
                       ),
@@ -282,16 +295,18 @@ class _SearchCardState extends State<_SearchCard> {
                   valueListenable: _searchController,
                   builder: (context, value, _) {
                     final isEnabled = value.text.trim().isNotEmpty;
-                    final actionColor =
-                        isEnabled ? AppColors.primary : AppColors.textMuted;
+                    final actionColor = isEnabled
+                        ? AppColors.primary
+                        : AppColors.textMuted;
                     return GestureDetector(
                       onTap: isEnabled ? _submitSearch : null,
                       child: Row(
                         children: [
                           Text(
                             'Cari',
-                            style: AppTextStyles.label
-                                .copyWith(color: actionColor),
+                            style: AppTextStyles.label.copyWith(
+                              color: actionColor,
+                            ),
                           ),
                           Icon(
                             Icons.arrow_forward,
@@ -330,11 +345,17 @@ class _HighlightCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.checklist_rtl, size: 18, color: AppColors.primaryDark),
+              const Icon(
+                Icons.checklist_rtl,
+                size: 18,
+                color: AppColors.primaryDark,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Masukkan Bahan Masakan',
-                style: AppTextStyles.label.copyWith(color: AppColors.primaryDark),
+                style: AppTextStyles.label.copyWith(
+                  color: AppColors.primaryDark,
+                ),
               ),
             ],
           ),

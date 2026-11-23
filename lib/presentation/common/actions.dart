@@ -16,9 +16,13 @@ void _snack(BuildContext context, String message, {bool error = false}) {
 
 /// Simpan / hapus bookmark resep database; tampilkan pesan kalau gagal.
 Future<void> toggleRecipeBookmark(
-    BuildContext context, RecipeSummary recipe) async {
+  BuildContext context,
+  RecipeSummary recipe,
+) async {
   try {
-    await BookmarkService.instance.toggleRecipe(SavedRecipe.fromSummary(recipe));
+    await BookmarkService.instance.toggleRecipe(
+      SavedRecipe.fromSummary(recipe),
+    );
   } catch (_) {
     if (context.mounted) {
       AppNotification.showError(context, 'Gagal menyimpan resep. Coba lagi.');
@@ -39,7 +43,7 @@ Future<void> pickCookPhotoFromGallery(BuildContext context) async {
     if (file == null) return; // dibatalkan
     if (!context.mounted) return;
 
-    _snack(context, 'Mengunggah foto...');
+    _snack(context, 'Menyimpan dokumentasi...');
     final saved = await CookDocService.instance.addCookDoc(
       CookDocItem(name: 'Masakanku', time: 'Hari ini', photoPath: file.path),
     );
@@ -47,8 +51,11 @@ Future<void> pickCookPhotoFromGallery(BuildContext context) async {
     if (saved) {
       _snack(context, 'Foto tersimpan di dokumentasi masak.');
     } else {
-      _snack(context, 'Gagal mengunggah foto. Periksa koneksi lalu coba lagi.',
-          error: true);
+      _snack(
+        context,
+        'Gagal menyimpan dokumentasi. Periksa koneksi lalu coba lagi.',
+        error: true,
+      );
     }
   } catch (_) {
     if (context.mounted) {

@@ -4,11 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
 class _NavItem {
-  const _NavItem({
-    this.icon,
-    this.customIconBuilder,
-    required this.label,
-  });
+  const _NavItem({this.icon, this.customIconBuilder, required this.label});
 
   final IconData? icon;
   final Widget Function(Color color, double size)? customIconBuilder;
@@ -19,7 +15,8 @@ final _items = [
   const _NavItem(icon: Icons.home_outlined, label: 'Beranda'),
   const _NavItem(icon: Icons.explore_outlined, label: 'Eksplorasi'),
   _NavItem(
-    customIconBuilder: (color, size) => InboxNavbarIcon(color: color, size: size),
+    customIconBuilder: (color, size) =>
+        InboxNavbarIcon(color: color, size: size),
     label: 'Input',
   ),
   const _NavItem(icon: Icons.person_outline_rounded, label: 'Profil'),
@@ -27,7 +24,11 @@ final _items = [
 
 /// Bottom nav 4-tab sesuai Figma: Beranda, Eksplorasi, Input, Profil.
 class AppBottomNav extends StatelessWidget {
-  const AppBottomNav({super.key, required this.currentIndex, required this.onTap});
+  const AppBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -62,7 +63,9 @@ class AppBottomNav extends StatelessWidget {
                         item.label,
                         style: AppTextStyles.caption.copyWith(
                           color: color,
-                          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: active
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
                       ),
                     ],
@@ -79,11 +82,7 @@ class AppBottomNav extends StatelessWidget {
 
 /// Icon baki / wadah 'Input' (Feather/Lucide style) sesuai dengan mockup Figma SmartCook.
 class InboxNavbarIcon extends StatelessWidget {
-  const InboxNavbarIcon({
-    super.key,
-    required this.color,
-    this.size = 24,
-  });
+  const InboxNavbarIcon({super.key, required this.color, this.size = 24});
 
   final Color color;
   final double size;
@@ -93,9 +92,7 @@ class InboxNavbarIcon extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _InboxNavbarIconPainter(color: color),
-      ),
+      child: CustomPaint(painter: _InboxNavbarIconPainter(color: color)),
     );
   }
 }
@@ -123,18 +120,30 @@ class _InboxNavbarIconPainter extends CustomPainter {
       ..moveTo(5.45, 5.11)
       ..lineTo(2.0, 12.0)
       ..lineTo(2.0, 18.0)
-      ..arcToPoint(const Offset(4.0, 20.0),
-          radius: const Radius.circular(2.0), clockwise: false)
+      ..arcToPoint(
+        const Offset(4.0, 20.0),
+        radius: const Radius.circular(2.0),
+        clockwise: false,
+      )
       ..lineTo(20.0, 20.0)
-      ..arcToPoint(const Offset(22.0, 18.0),
-          radius: const Radius.circular(2.0), clockwise: false)
+      ..arcToPoint(
+        const Offset(22.0, 18.0),
+        radius: const Radius.circular(2.0),
+        clockwise: false,
+      )
       ..lineTo(22.0, 12.0)
       ..lineTo(18.55, 5.11)
-      ..arcToPoint(const Offset(16.76, 4.0),
-          radius: const Radius.circular(2.0), clockwise: false)
+      ..arcToPoint(
+        const Offset(16.76, 4.0),
+        radius: const Radius.circular(2.0),
+        clockwise: false,
+      )
       ..lineTo(7.24, 4.0)
-      ..arcToPoint(const Offset(5.45, 5.11),
-          radius: const Radius.circular(2.0), clockwise: false)
+      ..arcToPoint(
+        const Offset(5.45, 5.11),
+        radius: const Radius.circular(2.0),
+        clockwise: false,
+      )
       ..close();
 
     // Garis lekukan (notch) depan baki

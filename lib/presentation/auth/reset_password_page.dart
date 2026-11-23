@@ -28,7 +28,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     super.initState();
     _newPasswordFocusNode.addListener(() {
       if (mounted) {
-        setState(() => _showPasswordRequirements = _newPasswordFocusNode.hasFocus);
+        setState(
+          () => _showPasswordRequirements = _newPasswordFocusNode.hasFocus,
+        );
       }
     });
   }
@@ -46,7 +48,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     final confirmPassword = _confirmPasswordController.text;
 
     if (newPassword.isEmpty || confirmPassword.isEmpty) {
-      setState(() => _error = 'Kata sandi baru dan konfirmasi kata sandi wajib diisi.');
+      setState(
+        () => _error = 'Kata sandi baru dan konfirmasi kata sandi wajib diisi.',
+      );
       return;
     }
 
@@ -55,13 +59,19 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       return;
     }
 
-    if (!RegExp(r'[A-Z]').hasMatch(newPassword) || !RegExp(r'[0-9]').hasMatch(newPassword)) {
-      setState(() => _error = 'Kata sandi harus mengandung kombinasi huruf besar dan angka.');
+    if (!RegExp(r'[A-Z]').hasMatch(newPassword) ||
+        !RegExp(r'[0-9]').hasMatch(newPassword)) {
+      setState(
+        () => _error =
+            'Kata sandi harus mengandung kombinasi huruf besar dan angka.',
+      );
       return;
     }
 
     if (newPassword != confirmPassword) {
-      setState(() => _error = 'Kata sandi baru dan konfirmasi kata sandi tidak cocok.');
+      setState(
+        () => _error = 'Kata sandi baru dan konfirmasi kata sandi tidak cocok.',
+      );
       return;
     }
 
@@ -88,7 +98,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Tidak dapat terhubung. Periksa koneksi internet Anda.');
+        setState(
+          () =>
+              _error = 'Tidak dapat terhubung. Periksa koneksi internet Anda.',
+        );
       }
     } finally {
       if (mounted) {
@@ -105,9 +118,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         fit: StackFit.expand,
         children: [
           const Positioned.fill(
-            child: CustomPaint(
-              painter: SmoothAuthBackgroundPainter(),
-            ),
+            child: CustomPaint(painter: SmoothAuthBackgroundPainter()),
           ),
           SafeArea(
             child: SingleChildScrollView(
@@ -247,7 +258,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   if (_error != null) ...[
                     const SizedBox(height: 14),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFEF2F2),
                         borderRadius: BorderRadius.circular(12),
@@ -255,7 +269,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, size: 18, color: AppColors.danger),
+                          const Icon(
+                            Icons.error_outline,
+                            size: 18,
+                            color: AppColors.danger,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -289,7 +307,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       onPressed: _loading ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF084E38),
-                        disabledBackgroundColor: const Color(0xFF084E38).withValues(alpha: 0.6),
+                        disabledBackgroundColor: const Color(0xFF084E38)
+                            .withValues(alpha: 0.6),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -301,7 +320,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(
@@ -324,4 +345,3 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     );
   }
 }
-

@@ -11,6 +11,7 @@ class HomeRecipeListItem extends StatelessWidget {
     required this.subtitle,
     this.durationMinutes,
     required this.calories,
+    this.imageUrl,
     this.imageAsset,
     this.bookmarked = false,
     this.onBookmarkTap,
@@ -21,6 +22,7 @@ class HomeRecipeListItem extends StatelessWidget {
   final String subtitle;
   final int? durationMinutes;
   final int calories;
+  final String? imageUrl;
   final String? imageAsset;
   final bool bookmarked;
   final VoidCallback? onBookmarkTap;
@@ -46,14 +48,27 @@ class HomeRecipeListItem extends StatelessWidget {
               child: SizedBox(
                 width: 72,
                 height: 72,
-                child: imageAsset != null
-                    ? Image.asset(
-                        imageAsset!,
+                child: (imageUrl != null && imageUrl!.isNotEmpty)
+                    ? Image.network(
+                        imageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            _buildPlaceholder(),
+                            imageAsset != null
+                            ? Image.asset(
+                                imageAsset!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => _buildPlaceholder(),
+                              )
+                            : _buildPlaceholder(),
                       )
-                    : _buildPlaceholder(),
+                    : (imageAsset != null
+                          ? Image.asset(
+                              imageAsset!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _buildPlaceholder(),
+                            )
+                          : _buildPlaceholder()),
               ),
             ),
             const SizedBox(width: 12),
@@ -124,4 +139,3 @@ class HomeRecipeListItem extends StatelessWidget {
     );
   }
 }
-

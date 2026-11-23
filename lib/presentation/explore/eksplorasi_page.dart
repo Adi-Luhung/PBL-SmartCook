@@ -24,12 +24,12 @@ class _ExploreRecipeItem {
   });
 
   factory _ExploreRecipeItem.fromSummary(RecipeSummary s) => _ExploreRecipeItem(
-        summary: s,
-        subtitle: s.category == null
-            ? '${s.totalIngredients} bahan'
-            : '${titleCase(s.category!)} • ${s.totalIngredients} bahan',
-        calories: caloriesPerPortion(s.kalori, s.beratG),
-      );
+    summary: s,
+    subtitle: s.category == null
+        ? '${s.totalIngredients} bahan'
+        : '${titleCase(s.category!)} • ${s.totalIngredients} bahan',
+    calories: caloriesPerPortion(s.kalori, s.beratG),
+  );
 
   final RecipeSummary summary;
   final String subtitle;
@@ -41,7 +41,7 @@ class _ExploreRecipeItem {
   String get time => '${summary.totalSteps} Langkah';
 
   // Resep database belum punya foto, rating, atau ulasan.
-  String? get imageUrl => null;
+  String? get imageUrl => summary.imageUrl;
   String? get imageAsset => null;
   bool get hasDiet => calories > 0;
   bool get hasRating => false;
@@ -70,8 +70,17 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
   static const _dietDiet = 'Diet Sehat';
   static const _dietNon = 'Non-Diet';
   static const _categories = [
-    'Semua', _dietDiet, _dietNon,
-    'Ayam', 'Ikan', 'Sapi', 'Kambing', 'Telur', 'Tahu', 'Tempe', 'Udang',
+    'Semua',
+    _dietDiet,
+    _dietNon,
+    'Ayam',
+    'Ikan',
+    'Sapi',
+    'Kambing',
+    'Telur',
+    'Tahu',
+    'Tempe',
+    'Udang',
   ];
 
   final _random = Random();
@@ -95,9 +104,8 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
     if (widget.onProfileTap != null) {
       widget.onProfileTap!();
     } else {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ProfilePage()),
-      );
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const ProfilePage()));
     }
   }
 
@@ -145,13 +153,17 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
       _selectedCategory == 'Semua' ? null : _selectedCategory.toLowerCase();
 
   /// Diet Sehat: kalori per porsi <= anggaran per makan; Non-Diet: di atasnya.
-  double? get _maxKkal => _dietFilter == _dietDiet ? _mealBudget.toDouble() : null;
-  double? get _minKkal => _dietFilter == _dietNon ? _mealBudget.toDouble() : null;
+  double? get _maxKkal =>
+      _dietFilter == _dietDiet ? _mealBudget.toDouble() : null;
+  double? get _minKkal =>
+      _dietFilter == _dietNon ? _mealBudget.toDouble() : null;
 
-  bool _isDiet(_ExploreRecipeItem r) => r.calories > 0 && r.calories <= _mealBudget;
+  bool _isDiet(_ExploreRecipeItem r) =>
+      r.calories > 0 && r.calories <= _mealBudget;
 
   bool _isChipSelected(String title) {
-    if (title == 'Semua') return _selectedCategory == 'Semua' && _dietFilter == null;
+    if (title == 'Semua')
+      return _selectedCategory == 'Semua' && _dietFilter == null;
     if (title == _dietDiet || title == _dietNon) return _dietFilter == title;
     return _selectedCategory == title;
   }
@@ -183,7 +195,9 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
     }
     try {
       final repo = ref.read(recipeRepositoryProvider);
-      final maxOffset = (_categoryFilter == null && _dietFilter == null) ? 5000 : 150;
+      final maxOffset = (_categoryFilter == null && _dietFilter == null)
+          ? 5000
+          : 150;
       var rows = await repo.exploreRecipes(
         category: _categoryFilter,
         maxKkal: _maxKkal,
@@ -232,8 +246,12 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
     try {
       final rows = await ref
           .read(recipeRepositoryProvider)
-          .searchRecipes(query,
-              category: _categoryFilter, maxKkal: _maxKkal, minKkal: _minKkal);
+          .searchRecipes(
+            query,
+            category: _categoryFilter,
+            maxKkal: _maxKkal,
+            minKkal: _minKkal,
+          );
       if (!mounted || seq != _searchSeq) return;
       setState(() {
         _searchItems = rows.map(_ExploreRecipeItem.fromSummary).toList();
@@ -300,12 +318,16 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       border: Border(
-                        bottom:
-                            BorderSide(color: Color(0xFFF1F5F9), width: 1.2),
+                        bottom: BorderSide(
+                          color: Color(0xFFF1F5F9),
+                          width: 1.2,
+                        ),
                       ),
                     ),
                     child: Row(
@@ -463,7 +485,9 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                                   const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 4),
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFE8F5E9),
                                       borderRadius: BorderRadius.circular(999),
@@ -519,12 +543,15 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                           else if (searchResults.isEmpty)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 36, horizontal: 20),
+                                vertical: 36,
+                                horizontal: 20,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                border:
-                                    Border.all(color: const Color(0xFFF1F5F9)),
+                                border: Border.all(
+                                  color: const Color(0xFFF1F5F9),
+                                ),
                               ),
                               alignment: Alignment.center,
                               child: Column(
@@ -572,8 +599,11 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                                         _searchQuery = '';
                                       });
                                     },
-                                    icon: const Icon(Icons.refresh_rounded,
-                                        size: 16, color: Color(0xFF084E38)),
+                                    icon: const Icon(
+                                      Icons.refresh_rounded,
+                                      size: 16,
+                                      color: Color(0xFF084E38),
+                                    ),
                                     label: const Text(
                                       'Tampilkan Semua Resep',
                                       style: TextStyle(
@@ -602,7 +632,6 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                               child: Center(child: CircularProgressIndicator()),
                             ),
                           if (popular != null) ...[
-
                             const SizedBox(height: 20),
                             const Text(
                               'Paling Populer',
@@ -636,7 +665,9 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                               );
                             }),
                           ],
-                          if (popular == null && recommended.isEmpty && !_loadingBrowse)
+                          if (popular == null &&
+                              recommended.isEmpty &&
+                              !_loadingBrowse)
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 40),
                               alignment: Alignment.center,
@@ -704,8 +735,9 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
   }
 
   Widget _buildFeaturedCard(_ExploreRecipeItem recipe) {
-    final isBookmarked =
-        BookmarkService.instance.isRecipeBookmarked(recipe.summary.id);
+    final isBookmarked = BookmarkService.instance.isRecipeBookmarked(
+      recipe.summary.id,
+    );
     return GestureDetector(
       onTap: () => _openRecipeDetail(recipe),
       child: Container(
@@ -737,18 +769,15 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               recipe.imageAsset != null
-                                  ? Image.asset(
-                                      recipe.imageAsset!,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : const SizedBox.expand(),
+                              ? Image.asset(
+                                  recipe.imageAsset!,
+                                  fit: BoxFit.cover,
+                                )
+                              : const SizedBox.expand(),
                         )
                       : (recipe.imageAsset != null
-                          ? Image.asset(
-                              recipe.imageAsset!,
-                              fit: BoxFit.cover,
-                            )
-                          : null),
+                            ? Image.asset(recipe.imageAsset!, fit: BoxFit.cover)
+                            : null),
                 ),
                 Positioned(
                   top: 12,
@@ -823,60 +852,66 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                                 color: Color(0xFFEA580C),
                               ),
                             ),
-                            if (recipe.hasDiet) ...[const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: _isDiet(recipe)
-                                    ? const Color(0xFFD1FAE5)
-                                    : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                _isDiet(recipe) ? 'Diet Sehat' : 'Non-Diet',
-                                style: TextStyle(
-                                  fontFamily: AppTextStyles.fontFamily,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                            if (recipe.hasDiet) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
                                   color: _isDiet(recipe)
-                                      ? const Color(0xFF065F46)
-                                      : const Color(0xFF475569),
+                                      ? const Color(0xFFD1FAE5)
+                                      : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  _isDiet(recipe) ? 'Diet Sehat' : 'Non-Diet',
+                                  style: TextStyle(
+                                    fontFamily: AppTextStyles.fontFamily,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: _isDiet(recipe)
+                                        ? const Color(0xFF065F46)
+                                        : const Color(0xFF475569),
+                                  ),
                                 ),
                               ),
-                            ),],
+                            ],
                           ],
                         ),
-                        if (recipe.hasRating) ...[const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              size: 16,
-                              color: Color(0xFFF59E0B),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${recipe.rating}',
-                              style: const TextStyle(
-                                fontFamily: AppTextStyles.fontFamily,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                        if (recipe.hasRating) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.star_rounded,
+                                size: 16,
+                                color: Color(0xFFF59E0B),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '(${recipe.reviewCount} ulasan)',
-                              style: const TextStyle(
-                                fontFamily: AppTextStyles.fontFamily,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF64748B),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${recipe.rating}',
+                                style: const TextStyle(
+                                  fontFamily: AppTextStyles.fontFamily,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),],
+                              const SizedBox(width: 4),
+                              Text(
+                                '(${recipe.reviewCount} ulasan)',
+                                style: const TextStyle(
+                                  fontFamily: AppTextStyles.fontFamily,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -924,8 +959,9 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
   }
 
   Widget _buildRecommendationCard(_ExploreRecipeItem recipe) {
-    final isBookmarked =
-        BookmarkService.instance.isRecipeBookmarked(recipe.summary.id);
+    final isBookmarked = BookmarkService.instance.isRecipeBookmarked(
+      recipe.summary.id,
+    );
     return GestureDetector(
       onTap: () => _openRecipeDetail(recipe),
       child: Container(
@@ -957,18 +993,12 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             recipe.imageAsset != null
-                                ? Image.asset(
-                                    recipe.imageAsset!,
-                                    fit: BoxFit.cover,
-                                  )
-                                : const SizedBox.expand(),
+                            ? Image.asset(recipe.imageAsset!, fit: BoxFit.cover)
+                            : const SizedBox.expand(),
                       )
                     : (recipe.imageAsset != null
-                        ? Image.asset(
-                            recipe.imageAsset!,
-                            fit: BoxFit.cover,
-                          )
-                        : null),
+                          ? Image.asset(recipe.imageAsset!, fit: BoxFit.cover)
+                          : null),
               ),
             ),
             const SizedBox(width: 12),
@@ -1039,60 +1069,66 @@ class _EksplorasiPageState extends ConsumerState<EksplorasiPage> {
                           color: Color(0xFFEA580C),
                         ),
                       ),
-                      if (recipe.hasDiet) ...[const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _isDiet(recipe)
-                              ? const Color(0xFFD1FAE5)
-                              : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          _isDiet(recipe) ? 'Diet Sehat' : 'Non-Diet',
-                          style: TextStyle(
-                            fontFamily: AppTextStyles.fontFamily,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                      if (recipe.hasDiet) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
                             color: _isDiet(recipe)
-                                ? const Color(0xFF065F46)
-                                : const Color(0xFF475569),
+                                ? const Color(0xFFD1FAE5)
+                                : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            _isDiet(recipe) ? 'Diet Sehat' : 'Non-Diet',
+                            style: TextStyle(
+                              fontFamily: AppTextStyles.fontFamily,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: _isDiet(recipe)
+                                  ? const Color(0xFF065F46)
+                                  : const Color(0xFF475569),
+                            ),
                           ),
                         ),
-                      ),],
+                      ],
                     ],
                   ),
-                  if (recipe.hasRating) ...[const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        size: 14,
-                        color: Color(0xFFF59E0B),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${recipe.rating}',
-                        style: const TextStyle(
-                          fontFamily: AppTextStyles.fontFamily,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                  if (recipe.hasRating) ...[
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 14,
+                          color: Color(0xFFF59E0B),
                         ),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        '(${recipe.reviewCount} ulasan)',
-                        style: const TextStyle(
-                          fontFamily: AppTextStyles.fontFamily,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF64748B),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${recipe.rating}',
+                          style: const TextStyle(
+                            fontFamily: AppTextStyles.fontFamily,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),],
+                        const SizedBox(width: 3),
+                        Text(
+                          '(${recipe.reviewCount} ulasan)',
+                          style: const TextStyle(
+                            fontFamily: AppTextStyles.fontFamily,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

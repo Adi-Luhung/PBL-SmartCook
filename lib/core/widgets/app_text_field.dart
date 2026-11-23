@@ -51,8 +51,8 @@ class _AppTextFieldState extends State<AppTextField> {
   void initState() {
     super.initState();
     _obscure = widget.obscureText;
-    _effectiveController = widget.controller ??
-        TextEditingController(text: widget.initialValue);
+    _effectiveController =
+        widget.controller ?? TextEditingController(text: widget.initialValue);
   }
 
   @override
@@ -106,8 +106,10 @@ class _AppTextFieldState extends State<AppTextField> {
             hintText: widget.hint,
             fillColor: widget.fillColor ?? AppColors.inputFill,
             filled: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
               borderSide: BorderSide.none,
@@ -118,12 +120,17 @@ class _AppTextFieldState extends State<AppTextField> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
-              borderSide:
-                  const BorderSide(color: AppColors.primary, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+                width: 1.5,
+              ),
             ),
             prefixIcon: widget.prefixIcon != null
-                ? Icon(widget.prefixIcon,
-                    size: 20, color: AppColors.textSecondary)
+                ? Icon(
+                    widget.prefixIcon,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  )
                 : null,
             suffixIcon: widget.obscureText
                 ? IconButton(
