@@ -24,13 +24,14 @@ class SavedRecipe {
 
   /// Resep dari database (disimpan juga di tabel `bookmarks`).
   factory SavedRecipe.fromSummary(RecipeSummary s) => SavedRecipe(
-        recipeId: s.id,
-        name: s.title,
-        time: '${s.totalSteps} Langkah',
-        ingredients: '${s.totalIngredients} Bahan',
-        calories: caloriesPerPortion(s.kalori, s.beratG),
-        portions: estimatePortions(s.beratG),
-      );
+    recipeId: s.id,
+    name: s.title,
+    time: '${s.totalSteps} Langkah',
+    ingredients: '${s.totalIngredients} Bahan',
+    imageUrl: s.imageUrl,
+    calories: caloriesPerPortion(s.kalori, s.beratG),
+    portions: estimatePortions(s.beratG),
+  );
 
   /// ID resep di database; null = resep lokal (mis. data contoh di Eksplorasi).
   final int? recipeId;
@@ -58,8 +59,9 @@ class BookmarkService extends ChangeNotifier {
   List<SavedRecipe> get savedRecipes => List.unmodifiable(_savedRecipes);
 
   bool isBookmarked(String title) {
-    return _savedRecipes
-        .any((r) => r.name.toLowerCase() == title.toLowerCase());
+    return _savedRecipes.any(
+      (r) => r.name.toLowerCase() == title.toLowerCase(),
+    );
   }
 
   bool isRecipeBookmarked(int recipeId) =>
