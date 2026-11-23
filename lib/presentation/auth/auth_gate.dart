@@ -23,11 +23,8 @@ class _AuthGateState extends State<AuthGate> {
     super.initState();
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.passwordRecovery && mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const ResetPasswordPage(),
-          ),
-        );
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const ResetPasswordPage()));
       }
     });
   }

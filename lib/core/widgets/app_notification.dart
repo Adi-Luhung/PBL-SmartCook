@@ -1,13 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_text_styles.dart';
 
-enum AppNotificationType {
-  success,
-  error,
-  info,
-}
+enum AppNotificationType { success, error, info }
 
 class AppNotification {
   AppNotification._();
@@ -26,8 +23,8 @@ class AppNotification {
       _activeEntry = null;
     }
 
-    final overlay = Overlay.maybeOf(context, rootOverlay: true) ??
-        Overlay.maybeOf(context);
+    final overlay =
+        Overlay.maybeOf(context, rootOverlay: true) ?? Overlay.maybeOf(context);
     if (overlay == null) return;
 
     late final OverlayEntry entry;
@@ -272,9 +269,7 @@ class _CenterPopupNotificationWidgetState
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _dismiss,
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.45),
-                ),
+                child: Container(color: Colors.black.withValues(alpha: 0.45)),
               ),
               Center(
                 child: ScaleTransition(
@@ -325,11 +320,7 @@ class _CenterPopupNotificationWidgetState
                                       );
                                     },
                                   )
-                                : Icon(
-                                    _iconData,
-                                    size: 32,
-                                    color: _iconColor,
-                                  ),
+                                : Icon(_iconData, size: 32, color: _iconColor),
                           ),
                         ),
                         if (widget.title != null &&
@@ -399,10 +390,7 @@ class _CenterPopupNotificationWidgetState
 }
 
 class _AnimatedCheckmarkPainter extends CustomPainter {
-  _AnimatedCheckmarkPainter({
-    required this.progress,
-    required this.color,
-  });
+  _AnimatedCheckmarkPainter({required this.progress, required this.color});
 
   final double progress;
   final Color color;

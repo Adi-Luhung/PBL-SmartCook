@@ -39,7 +39,8 @@ class PanduanMasakLoader extends ConsumerWidget {
                 AppButton(
                   label: 'Coba Lagi',
                   fullWidth: false,
-                  onPressed: () => ref.invalidate(recipeDetailProvider(recipeId)),
+                  onPressed: () =>
+                      ref.invalidate(recipeDetailProvider(recipeId)),
                 ),
               ],
             ),
@@ -70,8 +71,9 @@ class PanduanMasakLoader extends ConsumerWidget {
           proteinGrams: perPortion(r.proteinG),
           carbsGrams: perPortion(r.karboG),
           fatGrams: perPortion(r.lemakG),
-          weightPerPortionGrams:
-              (berat != null && berat > 0) ? (berat / portions).round() : null,
+          weightPerPortionGrams: (berat != null && berat > 0)
+              ? (berat / portions).round()
+              : null,
           caloriesPer100g: (r.kalori != null && berat != null && berat > 0)
               ? (r.kalori! / berat * 100).round()
               : null,

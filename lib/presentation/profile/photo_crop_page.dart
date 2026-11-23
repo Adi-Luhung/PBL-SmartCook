@@ -39,8 +39,9 @@ class _PhotoCropPageState extends State<PhotoCropPage> {
     setState(() => _saving = true);
     try {
       // 1. Capture area gambar dari RepaintBoundary.
-      final boundary = _repaintKey.currentContext!.findRenderObject()
-          as RenderRepaintBoundary;
+      final boundary =
+          _repaintKey.currentContext!.findRenderObject()
+              as RenderRepaintBoundary;
 
       // pixelRatio 3 = resolusi tinggi
       final fullImage = await boundary.toImage(pixelRatio: 3.0);
@@ -63,11 +64,12 @@ class _PhotoCropPageState extends State<PhotoCropPage> {
 
       // Clip lingkaran
       canvas.clipPath(
-        Path()
-          ..addOval(Rect.fromCircle(
+        Path()..addOval(
+          Rect.fromCircle(
             center: const Offset(outputSize / 2, outputSize / 2),
             radius: outputSize / 2,
-          )),
+          ),
+        ),
       );
 
       // Ambil bagian gambar yang ada di dalam lingkaran
@@ -84,12 +86,15 @@ class _PhotoCropPageState extends State<PhotoCropPage> {
       fullImage.dispose();
 
       final picture = recorder.endRecording();
-      final croppedImage =
-          await picture.toImage(outputSize.round(), outputSize.round());
+      final croppedImage = await picture.toImage(
+        outputSize.round(),
+        outputSize.round(),
+      );
 
       // 4. Encode ke PNG.
-      final byteData =
-          await croppedImage.toByteData(format: ui.ImageByteFormat.png);
+      final byteData = await croppedImage.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
       croppedImage.dispose();
 
       if (byteData == null) throw Exception('Gagal encode gambar');
@@ -135,10 +140,7 @@ class _PhotoCropPageState extends State<PhotoCropPage> {
                 maxScale: 8.0,
                 constrained: true,
                 child: SizedBox.expand(
-                  child: Image.file(
-                    File(widget.imagePath),
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.file(File(widget.imagePath), fit: BoxFit.cover),
                 ),
               ),
             ),
@@ -165,13 +167,15 @@ class _PhotoCropPageState extends State<PhotoCropPage> {
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.close,
-                          color: Colors.white, size: 26),
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 26,
+                      ),
                       onPressed: () => Navigator.of(context).pop(null),
                     ),
                     const Spacer(),
@@ -224,16 +228,14 @@ class _PhotoCropPageState extends State<PhotoCropPage> {
                         onPressed: _saving
                             ? null
                             : () {
-                                _transformController.value =
-                                    Matrix4.identity();
+                                _transformController.value = Matrix4.identity();
                               },
                         icon: const Icon(Icons.refresh_rounded, size: 18),
                         label: const Text('Reset'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white38),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -260,13 +262,11 @@ class _PhotoCropPageState extends State<PhotoCropPage> {
                                 ),
                               )
                             : const Icon(Icons.check_rounded, size: 20),
-                        label: Text(
-                            _saving ? 'Menyimpan...' : 'Gunakan Foto'),
+                        label: Text(_saving ? 'Menyimpan...' : 'Gunakan Foto'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),

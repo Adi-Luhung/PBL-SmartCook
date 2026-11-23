@@ -23,15 +23,14 @@ class _AuthPageState extends State<AuthPage> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: widget.initialIsLogin ? 0 : 1);
+    _pageController = PageController(
+      initialPage: widget.initialIsLogin ? 0 : 1,
+    );
 
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.passwordRecovery && mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const ResetPasswordPage(),
-          ),
-        );
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const ResetPasswordPage()));
         return;
       }
       if (data.session != null && mounted && Navigator.canPop(context)) {
@@ -75,9 +74,7 @@ class _AuthPageState extends State<AuthPage> {
         fit: StackFit.expand,
         children: [
           const Positioned.fill(
-            child: CustomPaint(
-              painter: SmoothAuthBackgroundPainter(),
-            ),
+            child: CustomPaint(painter: SmoothAuthBackgroundPainter()),
           ),
           SafeArea(
             child: Column(
@@ -137,9 +134,7 @@ class _AuthPageState extends State<AuthPage> {
                           24,
                           36,
                         ),
-                        child: LoginForm(
-                          onRegisterTap: _goToRegister,
-                        ),
+                        child: LoginForm(onRegisterTap: _goToRegister),
                       ),
                       SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
@@ -149,9 +144,7 @@ class _AuthPageState extends State<AuthPage> {
                           24,
                           36,
                         ),
-                        child: RegisterForm(
-                          onLoginTap: _goToLogin,
-                        ),
+                        child: RegisterForm(onLoginTap: _goToLogin),
                       ),
                     ],
                   ),

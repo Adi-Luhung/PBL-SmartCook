@@ -41,14 +41,20 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelColor = textColor ??
-        (variant == AppButtonVariant.primary ? Colors.white : AppColors.primary);
+    final labelColor =
+        textColor ??
+        (variant == AppButtonVariant.primary
+            ? Colors.white
+            : AppColors.primary);
 
     final child = loading
         ? const SizedBox(
             height: 18,
             width: 18,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white,
+            ),
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
@@ -58,7 +64,10 @@ class AppButton extends StatelessWidget {
                 Icon(icon, size: 20, color: labelColor),
                 const SizedBox(width: 8),
               ],
-              Text(label, style: AppTextStyles.button.copyWith(color: labelColor)),
+              Text(
+                label,
+                style: AppTextStyles.button.copyWith(color: labelColor),
+              ),
               if (icon != null && !iconLeading) ...[
                 const SizedBox(width: 8),
                 Icon(icon, size: 18, color: labelColor),
@@ -70,43 +79,37 @@ class AppButton extends StatelessWidget {
 
     final Widget buttonWidget = switch (variant) {
       AppButtonVariant.primary => ElevatedButton(
-          onPressed: loading ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: backgroundColor ?? AppColors.primary,
-            disabledBackgroundColor:
-                (backgroundColor ?? AppColors.primary).withValues(alpha: 0.6),
-            padding: EdgeInsets.symmetric(vertical: height != null ? 0 : 14),
-            minimumSize: height != null ? Size(0, height!) : null,
-            shape: RoundedRectangleBorder(borderRadius: radius),
-            elevation: 0,
-          ),
-          child: child,
+        onPressed: loading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor ?? AppColors.primary,
+          disabledBackgroundColor: (backgroundColor ?? AppColors.primary)
+              .withValues(alpha: 0.6),
+          padding: EdgeInsets.symmetric(vertical: height != null ? 0 : 14),
+          minimumSize: height != null ? Size(0, height!) : null,
+          shape: RoundedRectangleBorder(borderRadius: radius),
+          elevation: 0,
         ),
+        child: child,
+      ),
       AppButtonVariant.outline => OutlinedButton(
-          onPressed: onPressed,
-          style: OutlinedButton.styleFrom(
-            backgroundColor: backgroundColor,
-            side: borderSide ?? const BorderSide(color: AppColors.primary),
-            padding: EdgeInsets.symmetric(vertical: height != null ? 0 : 14),
-            minimumSize: height != null ? Size(0, height!) : null,
-            shape: RoundedRectangleBorder(borderRadius: radius),
-          ),
-          child: child,
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          side: borderSide ?? const BorderSide(color: AppColors.primary),
+          padding: EdgeInsets.symmetric(vertical: height != null ? 0 : 14),
+          minimumSize: height != null ? Size(0, height!) : null,
+          shape: RoundedRectangleBorder(borderRadius: radius),
         ),
-      AppButtonVariant.text => TextButton(
-          onPressed: onPressed,
-          child: child,
-        ),
+        child: child,
+      ),
+      AppButtonVariant.text => TextButton(onPressed: onPressed, child: child),
     };
 
     Widget result = buttonWidget;
 
     if (boxShadow != null) {
       result = DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          boxShadow: boxShadow,
-        ),
+        decoration: BoxDecoration(borderRadius: radius, boxShadow: boxShadow),
         child: result,
       );
     }

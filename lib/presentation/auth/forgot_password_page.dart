@@ -37,9 +37,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.passwordRecovery && mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => const ResetPasswordPage(),
-          ),
+          MaterialPageRoute(builder: (_) => const ResetPasswordPage()),
         );
       }
     });
@@ -114,9 +112,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       return;
     }
 
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     if (!emailRegex.hasMatch(email)) {
-      setState(() => _error = 'Format alamat email tidak valid (contoh: nama@email.com).');
+      setState(
+        () => _error =
+            'Format alamat email tidak valid (contoh: nama@email.com).',
+      );
       return;
     }
 
@@ -164,7 +167,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Tidak dapat terhubung. Periksa koneksi internet Anda.');
+        setState(
+          () =>
+              _error = 'Tidak dapat terhubung. Periksa koneksi internet Anda.',
+        );
       }
     } finally {
       if (mounted) {
@@ -181,9 +187,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         fit: StackFit.expand,
         children: [
           const Positioned.fill(
-            child: CustomPaint(
-              painter: SmoothAuthBackgroundPainter(),
-            ),
+            child: CustomPaint(painter: SmoothAuthBackgroundPainter()),
           ),
           SafeArea(
             child: SingleChildScrollView(
@@ -349,7 +353,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   if (_error != null) ...[
                     const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFEF2F2),
                         borderRadius: BorderRadius.circular(12),
@@ -357,7 +364,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, size: 18, color: AppColors.danger),
+                          const Icon(
+                            Icons.error_outline,
+                            size: 18,
+                            color: AppColors.danger,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -378,7 +389,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     const SizedBox(height: 14),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(12),
@@ -414,7 +428,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       onPressed: _loading ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF084E38),
-                        disabledBackgroundColor: const Color(0xFF084E38).withValues(alpha: 0.6),
+                        disabledBackgroundColor: const Color(0xFF084E38)
+                            .withValues(alpha: 0.6),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -426,7 +441,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : Text(

@@ -6,7 +6,8 @@ class IngredientService extends ChangeNotifier {
 
   List<String> _selectedIngredients = [];
 
-  List<String> get selectedIngredients => List.unmodifiable(_selectedIngredients);
+  List<String> get selectedIngredients =>
+      List.unmodifiable(_selectedIngredients);
 
   void setSelectedIngredients(List<String> ingredients) {
     _selectedIngredients = List.from(ingredients);

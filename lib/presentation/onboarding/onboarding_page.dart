@@ -29,7 +29,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   void _startAutoScroll() {
     _autoScrollTimer?.cancel();
-    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 4000), (timer) {
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 4000), (
+      timer,
+    ) {
       if (!mounted) {
         timer.cancel();
         return;
@@ -90,9 +92,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void _goToLogin() {
     _stopAutoScroll();
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const AuthPage(initialIsLogin: true),
-      ),
+      MaterialPageRoute(builder: (_) => const AuthPage(initialIsLogin: true)),
     );
   }
 
@@ -144,9 +144,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
             'assets/images/onboarding/onboarding_3.jpg',
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
-            errorBuilder: (context, error, stackTrace) => const ColoredBox(
-              color: Color(0xFFF1F5F9),
-            ),
+            errorBuilder: (context, error, stackTrace) =>
+                const ColoredBox(color: Color(0xFFF1F5F9)),
           ),
         ),
         Positioned.fill(
@@ -305,9 +304,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
             'assets/images/onboarding/onboarding_2.jpg',
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
-            errorBuilder: (context, error, stackTrace) => const ColoredBox(
-              color: Color(0xFFF1F5F9),
-            ),
+            errorBuilder: (context, error, stackTrace) =>
+                const ColoredBox(color: Color(0xFFF1F5F9)),
           ),
         ),
         Positioned.fill(
@@ -456,9 +454,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
             'assets/images/onboarding/onboarding_1.jpg',
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
-            errorBuilder: (context, error, stackTrace) => const ColoredBox(
-              color: Color(0xFFF1F5F9),
-            ),
+            errorBuilder: (context, error, stackTrace) =>
+                const ColoredBox(color: Color(0xFFF1F5F9)),
           ),
         ),
         Positioned.fill(
@@ -614,11 +611,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               _stopAutoScroll();
             }
           },
-          children: [
-            _buildSlideOne(),
-            _buildSlideTwo(),
-            _buildSlideThree(),
-          ],
+          children: [_buildSlideOne(), _buildSlideTwo(), _buildSlideThree()],
         ),
       ),
     );

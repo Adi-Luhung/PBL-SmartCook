@@ -1,15 +1,11 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import '../services/profile_photo_service.dart';
 
 class ProfileAvatar extends StatelessWidget {
-  const ProfileAvatar({
-    super.key,
-    this.radius = 18,
-    this.iconSize = 20,
-  });
+  const ProfileAvatar({super.key, this.radius = 18, this.iconSize = 20});
 
   final double radius;
   final double iconSize;

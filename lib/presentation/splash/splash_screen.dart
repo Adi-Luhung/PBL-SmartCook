@@ -160,11 +160,7 @@ class _SplashScreenState extends State<SplashScreen>
           children: [
             ...List.generate(
               _firstWord.length,
-              (i) => _buildLetter(
-                _firstWord[i],
-                i,
-                const Color(0xFF0F172A),
-              ),
+              (i) => _buildLetter(_firstWord[i], i, const Color(0xFF0F172A)),
             ),
             const SizedBox(width: 4),
             ...List.generate(

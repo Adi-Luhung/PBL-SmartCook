@@ -28,7 +28,8 @@ class AppBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(999),
@@ -45,9 +46,12 @@ class AppBadge extends StatelessWidget {
           ],
           Text(
             label,
-            style: textStyle ??
-                AppTextStyles.caption
-                    .copyWith(color: textColor, fontWeight: FontWeight.w600),
+            style:
+                textStyle ??
+                AppTextStyles.caption.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ],
       ),
@@ -65,7 +69,9 @@ class DietBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppBadge(
       label: isDiet ? 'Diet Sehat' : 'Non-Diet',
-      backgroundColor: isDiet ? AppColors.primaryLight : AppColors.neutralBadgeBg,
+      backgroundColor: isDiet
+          ? AppColors.primaryLight
+          : AppColors.neutralBadgeBg,
       textColor: isDiet ? AppColors.primaryDark : AppColors.neutralBadgeText,
     );
   }
