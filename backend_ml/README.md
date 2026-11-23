@@ -1,32 +1,26 @@
 # SmartCook Machine Learning Service (Backend Microservice)
 
-Backend REST API ini melayani inferensi model Machine Learning yang telah dilatih dari dataset resep (`resep_nutrisi.csv`) untuk aplikasi mobile **SmartCook**.
+Backend REST API ini melayani inferensi model Machine Learning yang telah dilatih dari dataset recount (`resep_nutrisi_recount.csv`) untuk aplikasi mobile **SmartCook**.
+
+- **Modul Rekomendasi Resep** dihitung langsung di database Supabase / PostgreSQL menggunakan SQL RPC function `match_recipes` berbasis TF-IDF + Cosine Similarity bahan utuh.
+- **Modul Diet Personal** dihitung langsung secara lokal di aplikasi Flutter (`lib/core/utils/nutrition.dart`) menggunakan aturan deterministik medis & gizi (WHO BMI Cut-offs & Mifflin-St Jeor BMR).
+- **Backend Microservice ini HANYA fokus melayani inferensi Klasifikasi Kategori Resep (Auto-Tagging Protein)**.
 
 ---
 
-## 3 Modul Machine Learning yang Dimuat:
+## Modul Machine Learning yang Dimuat:
 
-1. **Modul 1: TF-IDF Content-Based Recommender**
-   - **Algoritma:** TF-IDF Vectorizer + Cosine Similarity
-   - **Endpoint:** `POST /recommend`
-   - **Fungsi:** Menghitung skor kemiripan resep berdasarkan bahan yang diinputkan pengguna.
-
-2. **Modul 2: Auto-Tagging Kategori Resep**
-   - **Algoritma:** Logistic Regression ($C=5.0$) + Custom N-Gram TF-IDF Analyzer
-   - **Endpoint:** `POST /predict-category`
-   - **Fungsi:** Mengklasifikasikan jenis protein resep (*ayam, sapi, ikan, udang, telur, tahu, tempe, kambing*).
-
-3. **Modul 3: Filter Diet Personal (BMI × TDEE)**
-   - **Algoritma:** Decision Tree Classifier (`max_depth=5`)
-   - **Endpoint:** `POST /predict-diet`
-   - **Fungsi:** Memprediksi kategori diet (*Diet Ketat, Diet Ringan, Maintenance, Bulking*) dan alokasi batas kalori per porsi makan.
+### Auto-Tagging Kategori Resep
+- **Algoritma:** Logistic Regression ($C=5.0$) + Custom N-Gram TF-IDF Analyzer
+- **Endpoint:** `POST /predict-category`
+- **Fungsi:** Mengklasifikasikan jenis bahan utama / protein resep (*ayam, sapi, ikan, udang, telur, tahu, tempe, kambing*) saat pengguna mengunggah resep baru.
 
 ---
 
 ## Cara Menjalankan Backend:
 
 ### Cara 1: Double-Click File Batch (Windows)
-Cukup jalankan file `run_server.bat` di folder `backend_ml/`.
+Jalankan file `run_server.bat` di folder `backend_ml/`.
 
 ### Cara 2: Terminal / PowerShell
 ```bash
@@ -39,7 +33,7 @@ Dokumentasi interaktif (Swagger UI) otomatis tersedia di:
 
 ---
 
-## Integrasi di Flutter:
-- Service client ada di [`lib/core/services/ml_service.dart`](file:///D:/Kuliah/Semester%205/PBL/PBL-SmartCook/lib/core/services/ml_service.dart).
-- Jika server Python aktif, badge di tab Profil akan menampilkan label **API LIVE** (Cloud).
-- Jika server offline, Flutter otomatis beralih (*fallback*) ke **EMBEDDED** rules tanpa membuat aplikasi error.
+## Endpoint API:
+- `GET /` — Informasi status & arsitektur layanan
+- `GET /health` — Pemeriksaan status aktif (*health check*)
+- `POST /predict-category` — Inferensi auto-tagging kategori resep

@@ -1,18 +1,15 @@
 import os
 import sys
 import re
+import json
 import joblib
 import numpy as np
-import pandas as pd
-from typing import List, Optional
+from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sklearn.metrics.pairwise import cosine_similarity
 
 # ── Dependency Analyzer untuk Model TF-IDF ──────────────────────────────────
-# Kamus normalisasi dibaca dari models/ (disalin otomatis oleh train_and_export.py)
-import json
 KAMUS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'kamus_normalisasi.json')
 with open(KAMUS_PATH, 'r', encoding='utf-8') as f:
     NORMALISASI = json.load(f)
@@ -44,24 +41,20 @@ class SmartCookAnalyzer:
 # Daftarkan analyzer ke __main__ agar joblib deserializer menemukannya
 sys.modules['__main__'].SmartCookAnalyzer = SmartCookAnalyzer
 
-# ── Load Model ML ───────────────────────────────────────────────────────────
+# Load Model ML
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, 'models')
 
-print("Memuat seluruh model Machine Learning...")
-model_diet_dt = joblib.load(os.path.join(MODELS_DIR, 'model_diet_dt.joblib'))
+print("Memuat model klasifikasi kategori SmartCook...")
 model_kategori_lr = joblib.load(os.path.join(MODELS_DIR, 'model_kategori_lr.joblib'))
 vec_kategori = joblib.load(os.path.join(MODELS_DIR, 'vec_kategori.joblib'))
-vec_recom = joblib.load(os.path.join(MODELS_DIR, 'vec_recom.joblib'))
-matrix_recom = joblib.load(os.path.join(MODELS_DIR, 'matrix_recom.joblib'))
-recipes_meta = joblib.load(os.path.join(MODELS_DIR, 'recipes_meta.joblib'))
-print(f"Model berhasil dimuat! Resep tersedia: {len(recipes_meta):,}")
+print("Model klasifikasi kategori berhasil dimuat!")
 
 # ── Inisialisasi FastAPI ────────────────────────────────────────────────────
 app = FastAPI(
     title="SmartCook Machine Learning API",
-    description="REST API Microservice Machine Learning untuk PBL SmartCook (Diet Personal, Kategori, Rekomendasi TF-IDF)",
-    version="1.0.0"
+    description="REST API Microservice untuk Klasifikasi Kategori Resep (Auto-Tagging Protein)",
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -73,33 +66,21 @@ app.add_middleware(
 )
 
 # ── Schemas ─────────────────────────────────────────────────────────────────
-class DietPredictionRequest(BaseModel):
-    bmi: float
-    tdee: float
-    skor_bmi_tdee: Optional[float] = None
-    weight_kg: Optional[float] = None
-    height_cm: Optional[float] = None
-    age: Optional[int] = None
-    gender: Optional[str] = "Pria"
-
 class CategoryPredictionRequest(BaseModel):
     title: str
     ingredients: str
-
-class RecommendationRequest(BaseModel):
-    ingredients: List[str]
-    limit: Optional[int] = 10
 
 # ── Endpoints ───────────────────────────────────────────────────────────────
 @app.get("/")
 def root():
     return {
         "app": "SmartCook Machine Learning Service",
+        "version": "2.0.0",
         "status": "online",
-        "models_loaded": {
-            "modul_1_recommender": "TF-IDF + Cosine Similarity (5,739 recipes)",
-            "modul_2_category_classifier": "Logistic Regression + N-Gram TF-IDF",
-            "modul_3_diet_classifier": "Decision Tree Classifier (BMI x TDEE)"
+        "architecture": "Pilihan A (Hanya Klasifikasi Kategori Resep)",
+        "endpoints": {
+            "health": "GET /health",
+            "predict_category": "POST /predict-category"
         }
     }
 
@@ -107,48 +88,20 @@ def root():
 def health():
     return {"status": "ok"}
 
-@app.post("/predict-diet")
-def predict_diet(req: DietPredictionRequest):
-    """
-    Modul 3 ML: Memprediksi kategori diet personal pengguna menggunakan
-    model Decision Tree hasil training dengan fitur BMI, TDEE, dan Skor BMI x TDEE.
-    """
-    bmi = req.bmi
-    tdee = req.tdee
-    skor = req.skor_bmi_tdee if req.skor_bmi_tdee is not None else round(bmi * tdee, 2)
-    
-    # Input fitur ke Decision Tree model
-    X = pd.DataFrame([{'BMI': bmi, 'TDEE': tdee, 'Skor_BMI_TDEE': skor}])
-    predicted_diet = str(model_diet_dt.predict(X)[0])
-    
-    # Alokasi rasio kalori per porsi makan
-    rasio_dict = {
-        'Diet Ketat (Defisit Besar)': 0.25,
-        'Diet Ringan (Defisit Ringan)': 0.30,
-        'Maintenance (Seimbang)': 0.35,
-        'Bulking (Surplus)': 0.45
-    }
-    ratio = rasio_dict.get(predicted_diet, 0.35)
-    meal_calorie_budget = round(tdee * ratio)
-    
-    return {
-        "status": "success",
-        "bmi": bmi,
-        "tdee": tdee,
-        "skor_bmi_tdee": skor,
-        "diet_category": predicted_diet,
-        "meal_calorie_budget": meal_calorie_budget,
-        "meal_ratio": ratio,
-        "ml_model": "DecisionTreeClassifier(max_depth=5)"
-    }
-
 @app.post("/predict-category")
 def predict_category(req: CategoryPredictionRequest):
     """
-    Modul 2 ML: Auto-tagging kategori protein utama masakan dari judul dan daftar bahan
+    Auto-tagging kategori protein utama masakan dari judul dan daftar bahan
     menggunakan model Logistic Regression + N-Gram TF-IDF.
     """
-    text_combined = f"{req.title} , {req.ingredients}"
+    if not req.title.strip() and not req.ingredients.strip():
+        raise HTTPException(status_code=400, detail="Judul dan bahan tidak boleh kosong.")
+
+    # Normalisasi teks masukan
+    title_clean = bersihkan_frasa(req.title)
+    ingredients_clean = ", ".join([bersihkan_frasa(item) for item in req.ingredients.split(',') if bersihkan_frasa(item)])
+    text_combined = f"{title_clean} , {ingredients_clean}"
+
     vec = vec_kategori.transform([text_combined])
     pred_category = str(model_kategori_lr.predict(vec)[0])
     
@@ -160,34 +113,6 @@ def predict_category(req: CategoryPredictionRequest):
         "predicted_category": pred_category,
         "confidence": round(confidence * 100, 2),
         "ml_model": "LogisticRegression(C=5.0)"
-    }
-
-@app.post("/recommend")
-def recommend_recipes(req: RecommendationRequest):
-    """
-    Modul 1 ML: Rekomendasi resep berbasis TF-IDF Cosine Similarity.
-    """
-    query_str = ", ".join(req.ingredients)
-    query_vec = vec_recom.transform([query_str])
-    sims = cosine_similarity(query_vec, matrix_recom).flatten()
-    
-    top_indices = np.argsort(-sims)[:req.limit]
-    results = []
-    
-    for idx in top_indices:
-        score = float(sims[idx])
-        if score <= 0.0:
-            continue
-        rec = dict(recipes_meta[idx])
-        rec['similarity_score'] = round(score, 4)
-        rec['match_percent'] = int(round(score * 100))
-        results.append(rec)
-        
-    return {
-        "status": "success",
-        "count": len(results),
-        "recipes": results,
-        "ml_model": "TF-IDF + Cosine Similarity"
     }
 
 if __name__ == '__main__':
