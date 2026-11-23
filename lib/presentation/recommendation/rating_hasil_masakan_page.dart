@@ -91,7 +91,7 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
       'September',
       'Oktober',
       'November',
-      'Desember'
+      'Desember',
     ];
     final dayName = days[now.weekday - 1];
     final monthName = months[now.month - 1];
@@ -146,8 +146,10 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
                   ),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.camera_alt_outlined,
-                      color: Color(0xFF084E38)),
+                  leading: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: Color(0xFF084E38),
+                  ),
                   title: const Text(
                     'Ambil Foto dari Kamera',
                     style: TextStyle(
@@ -162,8 +164,10 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_outlined,
-                      color: Color(0xFF084E38)),
+                  leading: const Icon(
+                    Icons.photo_library_outlined,
+                    color: Color(0xFF084E38),
+                  ),
                   title: const Text(
                     'Pilih dari Galeri',
                     style: TextStyle(
@@ -334,8 +338,10 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
               fontSize: 13,
               color: Color(0xFF94A3B8),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -410,7 +416,7 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
       'Sep',
       'Okt',
       'Nov',
-      'Des'
+      'Des',
     ];
     final shortDate = '${now.day} ${months[now.month - 1]}';
 
@@ -432,11 +438,12 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
 
       messenger.showSnackBar(
         SnackBar(
-          content: Text(saved
-              ? 'Dokumentasi masak berhasil disimpan ke jurnal dapur!'
-              : 'Tersimpan di perangkat, tetapi gagal diunggah. Periksa koneksi internetmu.'),
-          backgroundColor:
-              saved ? const Color(0xFF084E38) : const Color(0xFFD97706),
+          content: Text(
+            saved ? 'Dokumentasi masak berhasil disimpan ke jurnal dapur!' : 'Tersimpan di perangkat, tetapi gagal dicatat di database. Periksa koneksi internetmu.',
+          ),
+          backgroundColor: saved
+              ? const Color(0xFF084E38)
+              : const Color(0xFFD97706),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -543,7 +550,10 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0F2FE),
                   borderRadius: BorderRadius.circular(20),
@@ -738,11 +748,7 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
             children: [
               const Row(
                 children: [
-                  Icon(
-                    Icons.stars_rounded,
-                    size: 20,
-                    color: Color(0xFFC2410C),
-                  ),
+                  Icon(Icons.stars_rounded, size: 20, color: Color(0xFFC2410C)),
                   SizedBox(width: 8),
                   Text(
                     'Rating Hasil Masakan',
@@ -756,7 +762,10 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0F2FE),
                   borderRadius: BorderRadius.circular(20),
@@ -850,8 +859,10 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? const Color(0xFFD1FAE5)
@@ -896,8 +907,10 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
               GestureDetector(
                 onTap: _showAddTagDialog,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(20),
@@ -909,11 +922,7 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.add,
-                        size: 13,
-                        color: Color(0xFF64748B),
-                      ),
+                      Icon(Icons.add, size: 13, color: Color(0xFF64748B)),
                       SizedBox(width: 4),
                       Text(
                         'Tambah Tag',
@@ -997,11 +1006,12 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
               controller: _notesController,
               maxLines: 4,
               maxLength: 200,
-              buildCounter: (context,
-                      {required currentLength,
-                      required isFocused,
-                      maxLength}) =>
-                  null,
+              buildCounter: (
+                context, {
+                required currentLength,
+                required isFocused,
+                maxLength,
+              }) => null,
               style: const TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 13,
@@ -1009,8 +1019,7 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
                 height: 1.45,
               ),
               decoration: const InputDecoration.collapsed(
-                hintText:
-                    'Brokoli ditambah sedikit wijen sangrai, dressing jeruk nipis pas dan segar...',
+                hintText: 'Brokoli ditambah sedikit wijen sangrai, dressing jeruk nipis pas dan segar...',
                 hintStyle: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 13,
@@ -1100,11 +1109,7 @@ class _RatingHasilMasakanPageState extends State<RatingHasilMasakanPage> {
         ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            thickness: 1.2,
-            color: Color(0xFFF1F5F9),
-          ),
+          child: Divider(height: 1, thickness: 1.2, color: Color(0xFFF1F5F9)),
         ),
       ),
       body: SafeArea(
